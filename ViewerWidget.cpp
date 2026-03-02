@@ -126,9 +126,12 @@ void ViewerWidget::drawLine(QPoint start, QPoint end, QColor color, int algType)
     if (algType == 0) {
 		drawLineDDA(start, end, color);
 	}
-	else {
+    else if (algType == 1){
 		drawLineBresenham(start, end, color);
 	}
+    else {
+        drawLineCircle(start, end, color);
+    }
     update();
 
 	//Po implementovani drawLineDDA a drawLineBresenham treba vymazat
@@ -214,112 +217,9 @@ void ViewerWidget::drawLineDDA(QPoint start, QPoint end, QColor color)
         }
     }
 }
+void ViewerWidget::drawLineBresenham(QPoint start, QPoint end, QColor color){
 
-
-void ViewerWidget::drawLineBresenham(QPoint start, QPoint end, QColor color)
-/*{
-
-    //preco mame tu rozdelenie na 4 a nie na 2
-    if (!img || !data) return;
-    int x0 = start.x(), x1 = end.x();
-    int y0 = start.y(), y1 = end.y();
-
-    int dx = x1 - x0, dy = y1 - y0;
-
-
-    int xStep = (x1 >= x0) ? 1 : -1;//preco >=
-    int yStep = (y1 >= y0) ? 1 : -1;
-
-
-    if (dx == 0 && dy == 0) {
-        setPixel(x0, y0, color);
-        return;
-    }
-
-    if (dx == 0) {
-        for (int y = y0; y != y1 + yStep; y += yStep)
-            setPixel(x0, y, color);
-        return;
-    }
-
-    if (dy == 0) {
-        for (int x = x0; x != x1 + xStep; x += xStep)
-            setPixel(x, y0, color);
-        return;
-    }
-
-    double m  = (double)dy / (double)dx;
-    if (0 < m && m < 1){
-
-        int p = 2 * dy - dx;
-        int k1 = 2 * dy, k2 = 2* dy - 2 * dx;
-        int x = x0, y = y0;
-        setPixel(x, y, color);
-        while(x < x1){
-            x += xStep;
-            if(p > 0){
-                y += yStep;
-                p += k2;
-            }
-            else{
-                p += k1;
-            }
-            setPixel(x, y, color);
-        }
-    }
-    else if (-1 < m && m < 0){
-        int p = 2 * dy + dx;
-        int k1 = 2 * dy, k2 = 2* dy + 2 * dx;
-        int x = x0, y = y0;
-        setPixel(x, y, color);
-        while(x < x1){
-            x += xStep;
-            if(p < 0){
-                y += yStep;
-                p += k2;
-            }
-            else{
-                p += k1;
-            }
-            setPixel(x, y, color);
-        }
-    }
-    else if (m > 1){
-        int p = 2 * dx - dy;
-        int k1 = 2 * dx, k2 = 2* dx - 2 * dy;
-        int x = x0, y = y0;
-        setPixel(x, y, color);
-        while(y < y1){
-            y += yStep;
-            if(p > 0){
-                x += xStep;
-                p += k2;
-            }
-            else{
-                p += k1;
-            }
-            setPixel(x, y, color);
-        }
-    }
-    else if (m < -1){
-        int p = 2 * dx + dy;
-        int k1 = 2 * dx, k2 = 2* dx + 2 * dy;
-        int x = x0, y = y0;
-        setPixel(x, y, color);
-        while(y <  y1){
-            y += yStep;
-            if(p < 0){
-                x += xStep;
-                p += k2;
-            }
-            else{
-                p += k1;
-            }
-            setPixel(x, y, color);
-        }
-    }
-}*/
-{
+//pracujeme z jednym oktantom a preto mozem pisat tak (0 <m < 1) || (m > 1)
     int x1 = start.x();
     int y1 = start.y();
     int x2 = end.x();
@@ -339,7 +239,7 @@ void ViewerWidget::drawLineBresenham(QPoint start, QPoint end, QColor color)
 
     // 4. Rozdelenie len na dva pripady podla sklonu (ciara je plocha alebo strma)
     if (adx >= ady) {
-        // RIADIACA OS JE X
+        // RIADIACA OS JE X (-1 < m < 1)
         int p = 2 * ady - adx;
         int k1 = 2 * ady;
         int k2 = 2 * (ady - adx);
@@ -357,7 +257,7 @@ void ViewerWidget::drawLineBresenham(QPoint start, QPoint end, QColor color)
         }
     }
     else {
-        // RIADIACA OS JE Y
+        // RIADIACA OS JE Y ( < -1  1 <)
         int p = 2 * adx - ady;
         int k1 = 2 * adx;
         int k2 = 2 * (adx - ady);
@@ -373,6 +273,20 @@ void ViewerWidget::drawLineBresenham(QPoint start, QPoint end, QColor color)
                 p += k1;
             }
         }
+    }
+}
+void ViewerWidget::drawLineCircle(QPoint center, QPoint radius, QColor color){
+    int xc = center.x(), yc = center.y();
+    int xr = radius.x(), yr = radius.y();
+
+    int r = abs(yc - yr);
+    int x = xc, y = r;
+    int p0 = 1 - r;
+    while(x <= y){
+        setPixel(x, y, color);
+        if(p0 > 0){ p0 += 2 * x - 2 * y + 5; y += 1; }
+        else{ p0 += 2 * x + 3; }
+        x += 1;
     }
 }
 //Slots

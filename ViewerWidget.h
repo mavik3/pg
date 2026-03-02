@@ -45,6 +45,7 @@ public:
 	//Algorithms
 	void drawLineDDA(QPoint start, QPoint end, QColor color);
 	void drawLineBresenham(QPoint start, QPoint end, QColor color);
+    void drawLineCircle(QPoint center, QPoint radius, QColor color);
 
 public slots:
 	void paintEvent(QPaintEvent* event) Q_DECL_OVERRIDE;
