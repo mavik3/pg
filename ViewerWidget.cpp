@@ -318,14 +318,14 @@ void ViewerWidget::drawPolygon(const QVector<QPoint>& pts, QColor color, int alg
         QPoint end = pts[i];
 
     if (algType == 0) drawLineDDA(start, end, color);
-    else drawLineBresenham(start, end, color);
+    else if (algType == 1) drawLineBresenham(start, end, color);
 
     start = end;
     }
 
     if (closed && pts.size() >= 3){
         if (algType == 0) drawLineDDA(start, pts[0], color);
-        else drawLineBresenham(start, pts[0], color);
+        else if (algType == 1) drawLineBresenham(start, pts[0], color);
     }
     update();
 }

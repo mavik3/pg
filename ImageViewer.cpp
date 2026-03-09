@@ -69,49 +69,6 @@ bool ImageViewer::ViewerWidgetEventFilter(QObject* obj, QEvent* event)
 void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 {
     QMouseEvent* e = static_cast<QMouseEvent*>(event);
-    QPoint p = e->pos();
-
-    // ===== POLYGON MODE =====
-    if (ui->toolButtonDrawPoligon->isChecked())
-    {
-        if (w->isPolygonFinished()) return;
-
-        if (e->button() == Qt::LeftButton)
-        {
-            QVector<QPoint>& pts = w->getPolygonPoints();
-            pts.push_back(p);
-
-            // показати вершину
-
-
-            // намалювати ребро між попередньою і новою вершиною
-            int n = pts.size();
-            if (n >= 2) {
-                if (ui->comboBoxLineAlg->currentIndex() == 0)
-                    w->drawLineDDA(pts[n - 2], pts[n - 1], globalColor);
-                else
-                    w->drawLineBresenham(pts[n - 2], pts[n - 1], globalColor);
-            }
-
-            w->update();
-        }
-        else if (e->button() == Qt::RightButton)
-        {
-            QVector<QPoint>& pts = w->getPolygonPoints();
-
-            if (pts.size() >= 3) {
-                if (ui->comboBoxLineAlg->currentIndex() == 0)
-                    w->drawLineDDA(pts.last(), pts.first(), globalColor);
-                else
-                    w->drawLineBresenham(pts.last(), pts.first(), globalColor);
-
-                w->setPolygonFinished(true);
-                w->update();
-            }
-        }
-
-        return;
-    }
 
     // ===== LINE MODE =====
     if (ui->toolButtonDrawLine->isChecked())
@@ -120,20 +77,53 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
         {
             if (w->getDrawLineActivated()) {
                 w->drawLine(w->getDrawLineBegin(),
-                            p,
+                            e->pos(),
                             globalColor,
                             ui->comboBoxLineAlg->currentIndex());
+
                 w->setDrawLineActivated(false);
             }
             else {
-                w->setDrawLineBegin(p);
+                w->setDrawLineBegin(e->pos());
                 w->setDrawLineActivated(true);
-                w->drawPointMarker(p, globalColor);
+
+                w->setPixel(e->pos().x(), e->pos().y(), globalColor);
                 w->update();
             }
         }
+    }
+    else if (ui->Polygon->isChecked())
+    {
+        if (e->button() == Qt::LeftButton)
+        {
+            w->getPolygonPoints().push_back(e->pos());
 
-        return;
+            w->setPixel(e->pos().x(), e->pos().y(), globalColor);
+
+            int n = w->getPolygonPoints().size();
+            if (n >= 2) {
+                QPoint a = w->getPolygonPoints()[n - 2];
+                QPoint b = w->getPolygonPoints()[n - 1];
+                w->drawLine(a, b, globalColor, ui->comboBoxLineAlg->currentIndex());
+            }
+            else {
+                w->update();
+            }
+        }
+        else if (e->button() == Qt::RightButton)
+        {
+            QVector<QPoint>& pts = w->getPolygonPoints();
+
+            if (pts.size() >= 3)
+            {
+                w->drawPolygon(
+                    pts,
+                    globalColor,
+                    ui->comboBoxLineAlg->currentIndex(),
+                    true
+                    );
+            }
+        }
     }
 }
 
