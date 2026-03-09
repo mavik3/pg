@@ -68,21 +68,76 @@ bool ImageViewer::ViewerWidgetEventFilter(QObject* obj, QEvent* event)
 }
 void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 {
-	QMouseEvent* e = static_cast<QMouseEvent*>(event);
-	if (e->button() == Qt::LeftButton && ui->toolButtonDrawLine->isChecked())//kresle iba ked tlacim
-	{
-		if (w->getDrawLineActivated()) {
-			w->drawLine(w->getDrawLineBegin(), e->pos(), globalColor, ui->comboBoxLineAlg->currentIndex());
-			w->setDrawLineActivated(false);
-		}
-		else {
-			w->setDrawLineBegin(e->pos());
-			w->setDrawLineActivated(true);
-			w->setPixel(e->pos().x(), e->pos().y(), globalColor); // da bodku na pixel
-			w->update();//paintEvent prekresli obrazok kazdy raz
-		}
-	}
+    QMouseEvent* e = static_cast<QMouseEvent*>(event);
+    QPoint p = e->pos();
+
+    // ===== POLYGON MODE =====
+    if (ui->toolButtonDrawPoligon->isChecked())
+    {
+        if (w->isPolygonFinished()) return;
+
+        if (e->button() == Qt::LeftButton)
+        {
+            QVector<QPoint>& pts = w->getPolygonPoints();
+            pts.push_back(p);
+
+            // показати вершину
+
+
+            // намалювати ребро між попередньою і новою вершиною
+            int n = pts.size();
+            if (n >= 2) {
+                if (ui->comboBoxLineAlg->currentIndex() == 0)
+                    w->drawLineDDA(pts[n - 2], pts[n - 1], globalColor);
+                else
+                    w->drawLineBresenham(pts[n - 2], pts[n - 1], globalColor);
+            }
+
+            w->update();
+        }
+        else if (e->button() == Qt::RightButton)
+        {
+            QVector<QPoint>& pts = w->getPolygonPoints();
+
+            if (pts.size() >= 3) {
+                if (ui->comboBoxLineAlg->currentIndex() == 0)
+                    w->drawLineDDA(pts.last(), pts.first(), globalColor);
+                else
+                    w->drawLineBresenham(pts.last(), pts.first(), globalColor);
+
+                w->setPolygonFinished(true);
+                w->update();
+            }
+        }
+
+        return;
+    }
+
+    // ===== LINE MODE =====
+    if (ui->toolButtonDrawLine->isChecked())
+    {
+        if (e->button() == Qt::LeftButton)
+        {
+            if (w->getDrawLineActivated()) {
+                w->drawLine(w->getDrawLineBegin(),
+                            p,
+                            globalColor,
+                            ui->comboBoxLineAlg->currentIndex());
+                w->setDrawLineActivated(false);
+            }
+            else {
+                w->setDrawLineBegin(p);
+                w->setDrawLineActivated(true);
+                w->drawPointMarker(p, globalColor);
+                w->update();
+            }
+        }
+
+        return;
+    }
 }
+
+
 void ImageViewer::ViewerWidgetMouseButtonRelease(ViewerWidget* w, QEvent* event)
 {
 	QMouseEvent* e = static_cast<QMouseEvent*>(event);

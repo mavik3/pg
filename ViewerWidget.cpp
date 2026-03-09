@@ -144,7 +144,10 @@ void ViewerWidget::drawLine(QPoint start, QPoint end, QColor color, int algType)
 void ViewerWidget::clear()
 {
     if (!img) return;//якщо пустий то повертаємо
-    img->fill(Qt::white);//так заливаємо білим
+    img->fill(Qt::white);
+    polygonPoints.clear();
+    polygonFinished = false;
+    drawLineActivated = false;//так заливаємо білим
     update();//обновляємо
 }
 
@@ -279,15 +282,52 @@ void ViewerWidget::drawLineCircle(QPoint center, QPoint radius, QColor color){
     int xc = center.x(), yc = center.y();
     int xr = radius.x(), yr = radius.y();
 
-    int r = abs(yc - yr);
-    int x = xc, y = r;
+    int r = sqrt(pow(xr - xc,2) + pow(yr - yc,2));
+    int twoX = 3;
+    int twoY = 2 * r - 2;
+    int x = 0;
+    int y = r;
+
     int p0 = 1 - r;
     while(x <= y){
-        setPixel(x, y, color);
-        if(p0 > 0){ p0 += 2 * x - 2 * y + 5; y += 1; }
-        else{ p0 += 2 * x + 3; }
+        drawCirclePoints(xc, yc, x, y, color);
+        if(p0 > 0){ p0 -= twoY; y--; twoY -= 2; }
+        //else{ p0 += 2 * x + 3; }
+        p0 +=twoX;
+        twoX += 2;
         x += 1;
     }
+}
+void ViewerWidget::drawCirclePoints(int xc, int yc, int x, int y, QColor color)
+{
+    setPixel(xc + x, yc + y, color);
+    setPixel(xc - x, yc + y, color);
+    setPixel(xc + x, yc - y, color);
+    setPixel(xc - x, yc - y, color);
+    setPixel(xc + y, yc + x, color);
+    setPixel(xc - y, yc + x, color);
+    setPixel(xc + y, yc - x, color);
+    setPixel(xc - y, yc - x, color);
+}
+void ViewerWidget::drawPolygon(const QVector<QPoint>& pts, QColor color, int algType, bool closed){
+    if (!img || !data) return;
+    if (pts.size() < 2 ) return;
+    QPoint start = pts[0];
+
+    for (int i = 1; i < pts.size(); ++i){
+        QPoint end = pts[i];
+
+    if (algType == 0) drawLineDDA(start, end, color);
+    else drawLineBresenham(start, end, color);
+
+    start = end;
+    }
+
+    if (closed && pts.size() >= 3){
+        if (algType == 0) drawLineDDA(start, pts[0], color);
+        else drawLineBresenham(start, pts[0], color);
+    }
+    update();
 }
 //Slots
 void ViewerWidget::paintEvent(QPaintEvent* event)//головна функція яку викликає qt

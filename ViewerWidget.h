@@ -10,6 +10,18 @@ private:
 	bool drawLineActivated = false;
 	QPoint drawLineBegin = QPoint(0, 0);
 
+
+
+
+    QVector<QPoint> polygonPoints;
+
+    bool objectExists = false;      // чи вже є готовий об'єкт
+    bool polygonFinished = false;   // чи завершений полігон
+
+
+
+
+
 public:
 	ViewerWidget(QSize imgSize, QWidget* parent = Q_NULLPTR);
 	~ViewerWidget();
@@ -46,7 +58,22 @@ public:
 	void drawLineDDA(QPoint start, QPoint end, QColor color);
 	void drawLineBresenham(QPoint start, QPoint end, QColor color);
     void drawLineCircle(QPoint center, QPoint radius, QColor color);
+    void drawCirclePoints(int xc, int yc, int x, int y, QColor color);
+    void drawPolygon(const QVector<QPoint>& pts, QColor color, int algLine, bool closed = true);
 
+
+
+    void setAlgorithm(int alg);
+    void drawPointMarker(QPoint p, QColor color);
+    void addPolygonPoint(QPoint p, QColor color);
+    void closePolygon(QColor color);
+
+
+
+    QVector<QPoint>& getPolygonPoints() { return polygonPoints; }
+    void clearPolygon() { polygonPoints.clear(); polygonFinished = false; }
+    bool isPolygonFinished() { return polygonFinished; }
+    void setPolygonFinished(bool s) { polygonFinished = s; }
 public slots:
 	void paintEvent(QPaintEvent* event) Q_DECL_OVERRIDE;
 };
