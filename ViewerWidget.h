@@ -17,7 +17,7 @@ private:
 
     bool objectExists = false;      // чи вже є готовий об'єкт
     bool polygonFinished = false;   // чи завершений полігон
-
+    bool lineFinished = false;
 
 
 
@@ -74,6 +74,7 @@ public:
     void clearPolygon() { polygonPoints.clear(); polygonFinished = false; }
     bool isPolygonFinished() { return polygonFinished; }
     void setPolygonFinished(bool s) { polygonFinished = s; }
+
 public slots:
 	void paintEvent(QPaintEvent* event) Q_DECL_OVERRIDE;
 };
