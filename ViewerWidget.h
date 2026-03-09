@@ -10,17 +10,13 @@ private:
 	bool drawLineActivated = false;
 	QPoint drawLineBegin = QPoint(0, 0);
 
-
-
-
     QVector<QPoint> polygonPoints;
 
-    bool objectExists = false;      // чи вже є готовий об'єкт
+    // чи вже є готовий об'єкт
     bool polygonFinished = false;   // чи завершений полігон
-    bool lineFinished = false;
 
-
-
+    bool draggingPolygon = false;
+    QPoint lastMousePos = QPoint(0, 0);
 
 public:
 	ViewerWidget(QSize imgSize, QWidget* parent = Q_NULLPTR);
@@ -40,10 +36,6 @@ public:
 
 	//Draw functions
 	void drawLine(QPoint start, QPoint end, QColor color, int algType = 0);
-	void setDrawLineBegin(QPoint begin) { drawLineBegin = begin; }
-	QPoint getDrawLineBegin() { return drawLineBegin; }
-	void setDrawLineActivated(bool state) { drawLineActivated = state; }
-	bool getDrawLineActivated() { return drawLineActivated; }
 
 	//Get/Set functions
 	uchar* getData() { return data; }
@@ -62,18 +54,20 @@ public:
     void drawPolygon(const QVector<QPoint>& pts, QColor color, int algLine, bool closed = true);
 
 
-
-    void setAlgorithm(int alg);
-    void drawPointMarker(QPoint p, QColor color);
-    void addPolygonPoint(QPoint p, QColor color);
-    void closePolygon(QColor color);
-
-
-
     QVector<QPoint>& getPolygonPoints() { return polygonPoints; }
     void clearPolygon() { polygonPoints.clear(); polygonFinished = false; }
     bool isPolygonFinished() { return polygonFinished; }
     void setPolygonFinished(bool s) { polygonFinished = s; }
+
+
+    bool isDraggingPolygon() const { return draggingPolygon; }
+    void setDraggingPolygon(bool state) { draggingPolygon = state; }
+
+    QPoint getLastMousePos() const { return lastMousePos; }
+    void setLastMousePos(QPoint p) { lastMousePos = p; }
+
+    void movePolygon(int dx, int dy);
+    void redrawPolygon(const QColor& color, int algType);
 
 public slots:
 	void paintEvent(QPaintEvent* event) Q_DECL_OVERRIDE;

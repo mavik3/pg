@@ -329,6 +329,27 @@ void ViewerWidget::drawPolygon(const QVector<QPoint>& pts, QColor color, int alg
     }
     update();
 }
+
+
+void ViewerWidget::movePolygon(int dx, int dy)
+{
+    for (QPoint& p : polygonPoints) {
+        p += QPoint(dx, dy);
+    }
+}
+
+void ViewerWidget::redrawPolygon(const QColor& color, int algType)
+{
+    if (!img) return;
+
+    img->fill(Qt::white);
+
+    if (polygonPoints.size() >= 2) {
+        drawPolygon(polygonPoints, color, algType, true);
+    }
+
+    update();
+}
 //Slots
 void ViewerWidget::paintEvent(QPaintEvent* event)//головна функція яку викликає qt
 {

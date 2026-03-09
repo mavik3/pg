@@ -107,8 +107,23 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
                 w->drawLine(pts[0],pts[1],globalColor,ui->comboBoxLineAlg->currentIndex());
             }
             w->setPolygonFinished(true);
-            w->setDrawLineActivated(true);
         }
+    }
+    // почати посування готового полігону
+    if (ui->Move->isChecked() && w->isPolygonFinished())
+    {
+        QMouseEvent* e = static_cast<QMouseEvent*>(event);
+
+        if (e->button() == Qt::LeftButton) {
+            w->setDraggingPolygon(true);
+            w->setLastMousePos(e->pos());
+        }
+        if (e->button() == Qt::RightButton){
+            w->setDraggingPolygon(false);
+            w->setLastMousePos(e->pos());
+        }
+
+        return;
     }
 }
 
@@ -119,7 +134,21 @@ void ImageViewer::ViewerWidgetMouseButtonRelease(ViewerWidget* w, QEvent* event)
 }
 void ImageViewer::ViewerWidgetMouseMove(ViewerWidget* w, QEvent* event)
 {
-	QMouseEvent* e = static_cast<QMouseEvent*>(event);
+    QMouseEvent* e = static_cast<QMouseEvent*>(event);
+
+    if (!w->isDraggingPolygon()) return;
+
+    QPoint currentPos = e->pos();
+    QPoint lastPos = w->getLastMousePos();
+
+    int dx = currentPos.x() - lastPos.x();
+    int dy = currentPos.y() - lastPos.y();
+
+    w->movePolygon(dx, dy);
+    w->setLastMousePos(currentPos);
+
+    w->redrawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex());
+
 }
 void ImageViewer::ViewerWidgetLeave(ViewerWidget* w, QEvent* event)
 {
