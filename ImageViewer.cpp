@@ -96,6 +96,7 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
     {
         if (e->button() == Qt::LeftButton)
         {
+            if (w->isPolygonFinished()) return;
             w->getPolygonPoints().push_back(e->pos());
 
             w->setPixel(e->pos().x(), e->pos().y(), globalColor);
@@ -122,6 +123,7 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
                     ui->comboBoxLineAlg->currentIndex(),
                     true
                     );
+                w->setPolygonFinished(true);
             }
         }
     }
