@@ -147,7 +147,6 @@ void ViewerWidget::clear()
     img->fill(Qt::white);
     polygonPoints.clear();
     polygonFinished = false;
-    drawLineActivated = false;//так заливаємо білим
     update();//обновляємо
 }
 
@@ -313,16 +312,20 @@ void ViewerWidget::drawPolygon(const QVector<QPoint>& pts, QColor color, int alg
     if (!img || !data) return;
     if (pts.size() < 2 ) return;
     QPoint start = pts[0];
+    if (algType != 2){
+        for (int i = 1; i < pts.size(); ++i){
+            QPoint end = pts[i];
 
-    for (int i = 1; i < pts.size(); ++i){
-        QPoint end = pts[i];
+            if (algType == 0) drawLineDDA(start, end, color);
+            else if (algType == 1) drawLineBresenham(start, end, color);
 
-    if (algType == 0) drawLineDDA(start, end, color);
-    else if (algType == 1) drawLineBresenham(start, end, color);
-
-    start = end;
+    // (algType == 2) drawLineCircle(start, end, color);
+        start = end;
+        }
     }
-
+    else {
+        drawLineCircle(pts[0], pts[1], color);
+    }
     if (closed && pts.size() >= 3){
         if (algType == 0) drawLineDDA(start, pts[0], color);
         else if (algType == 1) drawLineBresenham(start, pts[0], color);

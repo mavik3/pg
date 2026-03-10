@@ -1,4 +1,5 @@
-#include "ImageViewer.h"
+ #include "ImageViewer.h"
+
 //QObject
 //QEvent nase situaci
 //pos()- position mouse
@@ -72,6 +73,7 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 
     if (ui->Polygon->isChecked())
     {
+
         if (e->button() == Qt::LeftButton)
         {
             if (w->isPolygonFinished()) return;
@@ -83,7 +85,11 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
             if (n >= 2) {
                 QPoint a = w->getPolygonPoints()[n - 2];
                 QPoint b = w->getPolygonPoints()[n - 1];
+
                 w->drawLine(a, b, globalColor, ui->comboBoxLineAlg->currentIndex());
+                if(ui->comboBoxLineAlg->currentIndex() == 2){
+                    w->setPolygonFinished(true);
+                }
             }
             else {
                 w->update();
@@ -93,7 +99,7 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
         {
             QVector<QPoint>& pts = w->getPolygonPoints();
 
-            if (pts.size() >= 3)
+            if (pts.size() > 2)
             {
                 w->drawPolygon(
                     pts,
@@ -117,10 +123,16 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
         if (e->button() == Qt::LeftButton) {
             w->setDraggingPolygon(true);
             w->setLastMousePos(e->pos());
+           // if (ui->comboBoxLineAlg->currentIndex() == 2){
+
+          //  }
         }
         if (e->button() == Qt::RightButton){
             w->setDraggingPolygon(false);
             w->setLastMousePos(e->pos());
+          //  if(ui->comboBoxLineAlg->currentIndex() == 2){
+
+          //  }
         }
 
         return;

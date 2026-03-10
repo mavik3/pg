@@ -44,7 +44,7 @@ public:
 	int getImgWidth() { return img ? img->width() : 0; };
 	int getImgHeight() { return img ? img->height() : 0; };
 
-	void clear();
+    void clear();
 
 	//Algorithms
 	void drawLineDDA(QPoint start, QPoint end, QColor color);
@@ -68,6 +68,8 @@ public:
 
     void movePolygon(int dx, int dy);
     void redrawPolygon(const QColor& color, int algType);
+
+    //void rotation()
 
 public slots:
 	void paintEvent(QPaintEvent* event) Q_DECL_OVERRIDE;
