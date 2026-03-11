@@ -49,6 +49,7 @@ private slots:
 
     void on_Rotation_clicked();
     void on_Scale_clicked();
+    void on_Shear_clicked();
 
 	//Tools slots
 	void on_pushButtonSetColor_clicked();

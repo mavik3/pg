@@ -70,6 +70,7 @@ public:
     void redrawPolygon(const QColor& color, int algType);
 
     void Scale(double x, double y);
+    void Shear(double pS, int algType);
 
     void rotation(double k);
 

@@ -19,6 +19,7 @@ ImageViewer::ImageViewer(QWidget* parent)
 	ui->scrollArea->setWidgetResizable(false);//nemenie rozmer
 	ui->scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);//ked zmensi
 	ui->scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    ui->spinShear->setRange(-1,1);
 
 	vW->setObjectName("ViewerWidget"); //aby nazvat objekt
 	vW->installEventFilter(this);
@@ -269,6 +270,12 @@ void ImageViewer::on_Scale_clicked(){
     vW->Scale(x, y);
     vW->redrawPolygon(globalColor,ui->comboBoxLineAlg->currentIndex());
 }
+void ImageViewer::on_Shear_clicked(){
+    double pS = ui->spinShear->value();
+    vW->Shear(pS, ui->comboBoxShear->currentIndex());
+    vW->redrawPolygon(globalColor,ui->comboBoxLineAlg->currentIndex());
+}
+
 void ImageViewer::on_pushButtonSetColor_clicked()
 {
 	QColor newColor = QColorDialog::getColor(globalColor, this);

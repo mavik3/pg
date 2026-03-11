@@ -388,10 +388,38 @@ void ViewerWidget::Scale(double sx, double sy)
 
     cx /= polygonPoints.size();
     cy /= polygonPoints.size();
-
+    if (sx != 0 && sy != 0){
     for (QPoint& p : polygonPoints) {
-        if (sx != 0) { double nx = cx + (p.x() - cx) * sx; p.setX(nx); }
-        if (sy != 0) { double ny = cy + (p.y() - cy) * sy; p.setY(ny); }
+        double nx = cx + (p.x() - cx) * sx; p.setX(nx);
+        double ny = cy + (p.y() - cy) * sy; p.setY(ny);
+    }
+    }
+    else if (sx != 0){
+        for (QPoint& p : polygonPoints) {
+            double nx = cx + (p.x() - cx) * sx; p.setX(nx);
+           // double ny = cy + (p.y() - cy) * sy; p.setY(ny);
+        }
+    }
+    else if (sy != 0){
+            for (QPoint& p : polygonPoints) {
+               // double nx = cx + (p.x() - cx) * sx; p.setX(nx);
+                double ny = cy + (p.y() - cy) * sy; p.setY(ny);
+            }
+        }
+}
+void ViewerWidget::Shear(double pS,int algType){
+    if (polygonPoints.size() < 2 || !img) return;
+
+    if (algType == 0){
+        for (int i = 1; i < polygonPoints.size() - 1; i ++) {
+            double nx = polygonPoints[i].x() + polygonPoints[i].y() * pS; polygonPoints[i].setX(nx);
+
+        }
+    }
+    if (algType == 1){
+        for (int i = 1; i < polygonPoints.size() - 1; i++) {
+            double ny = polygonPoints[i].y() + polygonPoints[i].x() * pS; polygonPoints[i].setY(ny);
+        }
     }
 }
 //Slots
