@@ -353,6 +353,25 @@ void ViewerWidget::redrawPolygon(const QColor& color, int algType)
 
     update();
 }
+
+
+void ViewerWidget::rotation(double k){
+    if(polygonPoints.size() < 2 || !img) return;
+
+    double rad = k * M_PI / 180.0;
+    QPoint center = polygonPoints[0];
+    for (QPoint& p : polygonPoints){
+        double x = p.x() - center.x();
+        double y = p.y() - center.y();
+
+
+        double xr = x * cos(rad) - y * sin(rad) + center.x();
+        double yr = x * sin(rad) + y * cos(rad) + center.y();
+        p.setX(xr);
+        p.setY(yr);
+    }
+
+}
 //Slots
 void ViewerWidget::paintEvent(QPaintEvent* event)//головна функція яку викликає qt
 {

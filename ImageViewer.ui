@@ -153,10 +153,10 @@
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout_2">
        <item>
-        <widget class="QDoubleSpinBox" name="spinOtacanie"/>
+        <widget class="QDoubleSpinBox" name="spinRotation"/>
        </item>
        <item>
-        <widget class="QPushButton" name="pushButton">
+        <widget class="QPushButton" name="Rotation">
          <property name="text">
           <string>Otacanie</string>
          </property>

@@ -12,9 +12,9 @@ ImageViewer::ImageViewer(QWidget* parent)
 	: QMainWindow(parent), ui(new Ui::ImageViewerClass)
 {
 	ui->setupUi(this);
-	vW = new ViewerWidget(QSize(500, 500), ui->scrollArea);//velkost platna dinamicka
+    vW = new ViewerWidget(QSize(500, 500), ui->scrollArea);//velkost platna dinamicka
 	ui->scrollArea->setWidget(vW);//to nase platno QScrollArea este to bude posuvaci
-
+    ui->spinRotation->setRange(-360.0,360.0);
 	ui->scrollArea->setBackgroundRole(QPalette::Dark);// aby bola sd farba
 	ui->scrollArea->setWidgetResizable(false);//nemenie rozmer
 	ui->scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);//ked zmensi
@@ -76,7 +76,12 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 
         if (e->button() == Qt::LeftButton)
         {
-            if (w->isPolygonFinished()) return;
+            if(w->getPolygonFinished()){
+                w->clear();
+                w->setPolygonFinished(false);
+
+
+            }
             w->getPolygonPoints().push_back(e->pos());
 
             w->setPixel(e->pos().x(), e->pos().y(), globalColor);
@@ -116,7 +121,7 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
         }
     }
     // почати посування готового полігону
-    if (ui->Move->isChecked() && w->isPolygonFinished())
+    if (ui->Move->isChecked() && w->getPolygonFinished())
     {
         QMouseEvent* e = static_cast<QMouseEvent*>(event);
 
@@ -148,7 +153,7 @@ void ImageViewer::ViewerWidgetMouseMove(ViewerWidget* w, QEvent* event)
 {
     QMouseEvent* e = static_cast<QMouseEvent*>(event);
 
-    if (!w->isDraggingPolygon()) return;
+    if (!w->getDraggingPolygon()) return;
 
     QPoint currentPos = e->pos();
     QPoint lastPos = w->getLastMousePos();
@@ -249,6 +254,12 @@ void ImageViewer::on_actionClear_triggered()
 void ImageViewer::on_actionExit_triggered()
 {
 	this->close();
+}
+
+void ImageViewer::on_Rotation_clicked(){
+    double k = ui->spinRotation->value();
+    vW->rotation(k);
+    vW->redrawPolygon(globalColor,ui->comboBoxLineAlg->currentIndex());
 }
 
 void ImageViewer::on_pushButtonSetColor_clicked()

@@ -56,11 +56,11 @@ public:
 
     QVector<QPoint>& getPolygonPoints() { return polygonPoints; }
     void clearPolygon() { polygonPoints.clear(); polygonFinished = false; }
-    bool isPolygonFinished() { return polygonFinished; }
+    bool getPolygonFinished() { return polygonFinished; }
     void setPolygonFinished(bool s) { polygonFinished = s; }
 
 
-    bool isDraggingPolygon() const { return draggingPolygon; }
+    bool getDraggingPolygon() const { return draggingPolygon; }
     void setDraggingPolygon(bool state) { draggingPolygon = state; }
 
     QPoint getLastMousePos() const { return lastMousePos; }
@@ -69,7 +69,9 @@ public:
     void movePolygon(int dx, int dy);
     void redrawPolygon(const QColor& color, int algType);
 
-    //void rotation()
+
+
+    void rotation(double k);
 
 public slots:
 	void paintEvent(QPaintEvent* event) Q_DECL_OVERRIDE;
