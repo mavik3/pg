@@ -69,7 +69,7 @@ public:
     void movePolygon(int dx, int dy);
     void redrawPolygon(const QColor& color, int algType);
 
-
+    void Scale(double x, double y);
 
     void rotation(double k);
 

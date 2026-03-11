@@ -167,6 +167,7 @@ void ImageViewer::ViewerWidgetMouseMove(ViewerWidget* w, QEvent* event)
     w->redrawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex());
 
 }
+
 void ImageViewer::ViewerWidgetLeave(ViewerWidget* w, QEvent* event)
 {
 }
@@ -262,6 +263,12 @@ void ImageViewer::on_Rotation_clicked(){
     vW->redrawPolygon(globalColor,ui->comboBoxLineAlg->currentIndex());
 }
 
+void ImageViewer::on_Scale_clicked(){
+    double x = ui->spinX->value();
+    double y = ui->spinY->value();
+    vW->Scale(x, y);
+    vW->redrawPolygon(globalColor,ui->comboBoxLineAlg->currentIndex());
+}
 void ImageViewer::on_pushButtonSetColor_clicked()
 {
 	QColor newColor = QColorDialog::getColor(globalColor, this);

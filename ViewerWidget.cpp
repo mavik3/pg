@@ -372,6 +372,28 @@ void ViewerWidget::rotation(double k){
     }
 
 }
+
+
+void ViewerWidget::Scale(double sx, double sy)
+{
+    if (polygonPoints.isEmpty() || !img) return;
+
+    double cx = 0.0;
+    double cy = 0.0;
+
+    for (const QPoint& p : polygonPoints) {
+        cx += p.x();
+        cy += p.y();
+    }
+
+    cx /= polygonPoints.size();
+    cy /= polygonPoints.size();
+
+    for (QPoint& p : polygonPoints) {
+        if (sx != 0) { double nx = cx + (p.x() - cx) * sx; p.setX(nx); }
+        if (sy != 0) { double ny = cy + (p.y() - cy) * sy; p.setY(ny); }
+    }
+}
 //Slots
 void ViewerWidget::paintEvent(QPaintEvent* event)//головна функція яку викликає qt
 {

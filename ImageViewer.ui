@@ -25,7 +25,7 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>633</width>
+         <width>569</width>
          <height>565</height>
         </rect>
        </property>
@@ -159,6 +159,23 @@
         <widget class="QPushButton" name="Rotation">
          <property name="text">
           <string>Otacanie</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_3">
+       <item>
+        <widget class="QDoubleSpinBox" name="spinX"/>
+       </item>
+       <item>
+        <widget class="QDoubleSpinBox" name="spinY"/>
+       </item>
+       <item>
+        <widget class="QPushButton" name="Scale">
+         <property name="text">
+          <string>Scalovanie</string>
          </property>
         </widget>
        </item>

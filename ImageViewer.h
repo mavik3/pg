@@ -48,6 +48,7 @@ private slots:
 	void on_actionExit_triggered();
 
     void on_Rotation_clicked();
+    void on_Scale_clicked();
 
 	//Tools slots
 	void on_pushButtonSetColor_clicked();
