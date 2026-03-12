@@ -40,6 +40,7 @@ private:
 	//Image functions
 	bool openImage(QString filename);
 	bool saveImage(QString filename);
+    void updatefill(ViewerWidget* w);
 
 private slots:
 	void on_actionOpen_triggered();
@@ -50,6 +51,8 @@ private slots:
     void on_Rotation_clicked();
     void on_Scale_clicked();
     void on_Shear_clicked();
+
+
 
 	//Tools slots
 	void on_pushButtonSetColor_clicked();

@@ -341,7 +341,7 @@ void ViewerWidget::movePolygon(int dx, int dy)
     }
 }
 
-void ViewerWidget::redrawPolygon(const QColor& color, int algType)
+/*void ViewerWidget::redrawPolygon(const QColor& color, int algType)
 {
     if (!img) return;
 
@@ -353,31 +353,36 @@ void ViewerWidget::redrawPolygon(const QColor& color, int algType)
 
     update();
 }
+*/
 
+QVector<QPoint> ViewerWidget::rotation(const QVector<QPoint>& p, double k){
 
-void ViewerWidget::rotation(double k){
-    if(polygonPoints.size() < 2 || !img) return;
+    if(p.isEmpty()) return p;
+
+    QVector<QPoint> newPoint;
 
     double rad = k * M_PI / 180.0;
     QPoint center = polygonPoints[0];
-    for (QPoint& p : polygonPoints){
-        double x = p.x() - center.x();
-        double y = p.y() - center.y();
+    for (int i = 0; i < p.size(); i++){
+        double x = p[i].x() - center.x();
+        double y = p[i].y() - center.y();
 
 
-        double xr = x * cos(rad) - y * sin(rad) + center.x();
-        double yr = x * sin(rad) + y * cos(rad) + center.y();
-        p.setX(xr);
-        p.setY(yr);
+        double xr = qRound(x * cos(rad) - y * sin(rad) + center.x());
+        double yr = qRound(x * sin(rad) + y * cos(rad) + center.y());
+        newPoint.append(QPoint(xr,yr));
     }
+    return newPoint;
 
 }
 
 
-void ViewerWidget::Scale(double sx, double sy)
+QVector<QPoint> ViewerWidget::Scale(const QVector<QPoint>& p, double sx, double sy)
 {
-    if (polygonPoints.isEmpty() || !img) return;
+     if(p.isEmpty()) return p;
+     QVector<QPoint> newPoint;
 
+         //kruznica
     double cx = 0.0;
     double cy = 0.0;
 
@@ -390,36 +395,55 @@ void ViewerWidget::Scale(double sx, double sy)
     cy /= polygonPoints.size();
     if (sx != 0 && sy != 0){
     for (QPoint& p : polygonPoints) {
-        double nx = cx + (p.x() - cx) * sx; p.setX(nx);
-        double ny = cy + (p.y() - cy) * sy; p.setY(ny);
+        int nx = qRound(cx + (p.x() - cx) * sx);
+        int ny = qRound(cy + (p.y() - cy) * sy);
+        newPoint.append(QPoint(nx,ny));
     }
     }
     else if (sx != 0){
         for (QPoint& p : polygonPoints) {
             double nx = cx + (p.x() - cx) * sx; p.setX(nx);
            // double ny = cy + (p.y() - cy) * sy; p.setY(ny);
+            newPoint.append(QPoint(nx,p.y()));
+
         }
     }
     else if (sy != 0){
             for (QPoint& p : polygonPoints) {
                // double nx = cx + (p.x() - cx) * sx; p.setX(nx);
                 double ny = cy + (p.y() - cy) * sy; p.setY(ny);
+                newPoint.append(QPoint(p.x(),ny));
             }
         }
+    return newPoint;
 }
-void ViewerWidget::Shear(double pS,int algType){
-    if (polygonPoints.size() < 2 || !img) return;
-
+QVector<QPoint> ViewerWidget::Shear(const QVector<QPoint>& p, double pS,int algType){
+    if(p.isEmpty()) return p;
+    QVector<QPoint> newPoint;
     if (algType == 0){
-        for (int i = 1; i < polygonPoints.size() - 1; i ++) {
-            double nx = polygonPoints[i].x() + polygonPoints[i].y() * pS; polygonPoints[i].setX(nx);
-
+        for (int i = 0; i < polygonPoints.size(); i ++) {
+            double nx = qRound(polygonPoints[i].x() + polygonPoints[i].y() * pS);
+            newPoint.append(QPoint(nx,polygonPoints[i].y()));
         }
     }
     if (algType == 1){
-        for (int i = 1; i < polygonPoints.size() - 1; i++) {
-            double ny = polygonPoints[i].y() + polygonPoints[i].x() * pS; polygonPoints[i].setY(ny);
+        for (int i = 0; i < polygonPoints.size(); i++) {
+            double ny = polygonPoints[i].y() + polygonPoints[i].x() * pS;
+            newPoint.append(QPoint(polygonPoints[i].x(),ny));
         }
+    }
+    return newPoint;
+}
+void ViewerWidget::OsSum(QPoint start, QPoint end){
+    int Vx = end.x() - start.x(), Vy = end.y() - start.y();
+
+    int a = Vx, b = -Vy, c = -a * start.x() - b * start.y();
+
+    for(QPoint& p : polygonPoints){
+        double dx = p.x() - 2 * a * ((a * p.x() + b * p.y() + c) / (a * a + b * b));
+        double dy = p.x() - 2 * b * ((a * p.x() + b * p.y() + c) / (a * a + b * b));
+        p.setX(dx);
+        p.setY(dy);
     }
 }
 //Slots

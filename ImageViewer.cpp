@@ -77,10 +77,11 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 
         if (e->button() == Qt::LeftButton)
         {
+            if(!ui->OsSum->isCheckable()){
             if(w->getPolygonFinished()){
                 w->clear();
                 w->setPolygonFinished(false);
-
+            }
 
             }
             w->getPolygonPoints().push_back(e->pos());
@@ -143,6 +144,8 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 
         return;
     }
+
+
 }
 
 
@@ -165,8 +168,7 @@ void ImageViewer::ViewerWidgetMouseMove(ViewerWidget* w, QEvent* event)
     w->movePolygon(dx, dy);
     w->setLastMousePos(currentPos);
 
-    w->redrawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex());
-
+    updatefill(w);
 }
 
 void ImageViewer::ViewerWidgetLeave(ViewerWidget* w, QEvent* event)
@@ -259,21 +261,34 @@ void ImageViewer::on_actionExit_triggered()
 }
 
 void ImageViewer::on_Rotation_clicked(){
+    if(vW->getTransformedPoints().isEmpty()) return;
     double k = ui->spinRotation->value();
-    vW->rotation(k);
-    vW->redrawPolygon(globalColor,ui->comboBoxLineAlg->currentIndex());
+    QVector<QPoint> pts = vW->rotation(vW->getPolygonPoints(), k);
+    QVector<QPoint> polygonR = vW->rotation(vW->getTransformedPoints(), k);
+    vW->setTransformedPoints(polygonR);
+    vW->rotation(pts, k);
+    vW->drawPolygon(vW->getTransformedPoints(),globalColor,ui->comboBoxLineAlg->currentIndex());
 }
 
 void ImageViewer::on_Scale_clicked(){
+    if(vW->getTransformedPoints().isEmpty()) return;
     double x = ui->spinX->value();
     double y = ui->spinY->value();
-    vW->Scale(x, y);
-    vW->redrawPolygon(globalColor,ui->comboBoxLineAlg->currentIndex());
+
+    QVector<QPoint> polygonS = vW->Scale(vW->getTransformedPoints(), x, y);
+
+    vW->setTransformedPoints(polygonS);
 }
 void ImageViewer::on_Shear_clicked(){
+    if (vW->getTransformedPoints().isEmpty()) return;
     double pS = ui->spinShear->value();
-    vW->Shear(pS, ui->comboBoxShear->currentIndex());
-    vW->redrawPolygon(globalColor,ui->comboBoxLineAlg->currentIndex());
+    QVector<QPoint> polygonSH = vW->Shear(vW->getTransformedPoints(), pS, ui->comboBoxShear->currentIndex());
+    vW->setTransformedPoints(polygonSH);
+}
+void ImageViewer::updatefill(ViewerWidget* w){
+    w->clear();
+    w->drawPolygon(vW->getTransformedPoints(),globalColor, vW->getPolygonFinished());
+    w->update();
 }
 
 void ImageViewer::on_pushButtonSetColor_clicked()

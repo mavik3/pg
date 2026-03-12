@@ -25,7 +25,7 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>555</width>
+         <width>569</width>
          <height>565</height>
         </rect>
        </property>
@@ -208,6 +208,19 @@
         </widget>
        </item>
       </layout>
+     </item>
+     <item>
+      <widget class="QToolButton" name="OsSum">
+       <property name="text">
+        <string>OsSum</string>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+       <property name="autoRepeatInterval">
+        <number>100</number>
+       </property>
+      </widget>
      </item>
      <item>
       <spacer name="verticalSpacer">

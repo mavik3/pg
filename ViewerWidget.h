@@ -11,6 +11,7 @@ private:
 	QPoint drawLineBegin = QPoint(0, 0);
 
     QVector<QPoint> polygonPoints;
+    QVector<QPoint> TpolygonPoints;
 
     // чи вже є готовий об'єкт
     bool polygonFinished = false;   // чи завершений полігон
@@ -55,6 +56,13 @@ public:
 
 
     QVector<QPoint>& getPolygonPoints() { return polygonPoints; }
+    void setPolygonPoints(QVector<QPoint> p){polygonPoints = p;}
+
+
+    void setTransformedPoints(const QVector<QPoint>& tpoints) { TpolygonPoints = tpoints; }
+    QVector<QPoint> getTransformedPoints() { return TpolygonPoints; }
+
+
     void clearPolygon() { polygonPoints.clear(); polygonFinished = false; }
     bool getPolygonFinished() { return polygonFinished; }
     void setPolygonFinished(bool s) { polygonFinished = s; }
@@ -67,12 +75,13 @@ public:
     void setLastMousePos(QPoint p) { lastMousePos = p; }
 
     void movePolygon(int dx, int dy);
-    void redrawPolygon(const QColor& color, int algType);
+    //void redrawPolygon(const QColor& color, int algType);
 
-    void Scale(double x, double y);
-    void Shear(double pS, int algType);
+    QVector<QPoint> Scale(const QVector<QPoint>& p, double x, double y);
+    QVector<QPoint> Shear(const QVector<QPoint>& p, double pS, int algType);
 
-    void rotation(double k);
+    QVector<QPoint> rotation(const QVector<QPoint>& p, double k);
+    void OsSum(QPoint start, QPoint end);
 
 public slots:
 	void paintEvent(QPaintEvent* event) Q_DECL_OVERRIDE;
