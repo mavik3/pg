@@ -388,39 +388,47 @@ void ViewerWidget::Scale(double sx, double sy)
 
     cx /= polygonPoints.size();
     cy /= polygonPoints.size();
-    if (sx != 0 && sy != 0){
     for (QPoint& p : polygonPoints) {
-        double nx = cx + (p.x() - cx) * sx; p.setX(nx);
-        double ny = cy + (p.y() - cy) * sy; p.setY(ny);
-    }
-    }
-    else if (sx != 0){
-        for (QPoint& p : polygonPoints) {
-            double nx = cx + (p.x() - cx) * sx; p.setX(nx);
-           // double ny = cy + (p.y() - cy) * sy; p.setY(ny);
-        }
-    }
-    else if (sy != 0){
-            for (QPoint& p : polygonPoints) {
-               // double nx = cx + (p.x() - cx) * sx; p.setX(nx);
-                double ny = cy + (p.y() - cy) * sy; p.setY(ny);
-            }
-        }
+    if (sx != 0) { double nx = cx + (p.x() - cx) * sx; p.setX(nx); }
+    if (sy != 0) { double ny = cy + (p.y() - cy) * sy; p.setY(ny); }
+}
 }
 void ViewerWidget::Shear(double pS,int algType){
     if (polygonPoints.size() < 2 || !img) return;
 
     if (algType == 0){
-        for (int i = 1; i < polygonPoints.size() - 1; i ++) {
+        for (int i = 0; i < polygonPoints.size(); i ++) {
             double nx = polygonPoints[i].x() + polygonPoints[i].y() * pS; polygonPoints[i].setX(nx);
 
         }
     }
     if (algType == 1){
-        for (int i = 1; i < polygonPoints.size() - 1; i++) {
+        for (int i = 0; i < polygonPoints.size(); i++) {
             double ny = polygonPoints[i].y() + polygonPoints[i].x() * pS; polygonPoints[i].setY(ny);
         }
     }
+}
+void ViewerWidget::OsSum(){
+    if (polygonPoints.size() < 2 || !img) return;
+   // if (polygonPoints.size() == 2){}
+  //  else if (polygonPoints.size() > 2){}
+    int x1 = polygonPoints[0].x(), x2 = polygonPoints[1].x();
+        int y1 = polygonPoints[0].y(), y2 = polygonPoints[1].y();
+        int Vx = x2 - x1, Vy = y2 - y1;
+        double a = Vy, b = -Vx, c = - a * x1 - b * y1;
+
+        if (polygonPoints.size() > 2){
+            for (int i = 1; i < polygonPoints.size(); i++){
+            double xN = polygonPoints[i].x() - 2 * a * ((a * polygonPoints[i].x() + b * polygonPoints[i].y() + c) / (a * a + b * b));
+            double yN = polygonPoints[i].y() - 2 * b * ((a * polygonPoints[i].x() + b * polygonPoints[i].y() + c) / (a * a + b * b));
+            polygonPoints[i].setX(xN), polygonPoints[i].setY(yN);
+        }
+        }
+        else if (polygonPoints.size() == 2){
+            polygonPoints[1].setX(x2);
+            polygonPoints[1].setY(2 * y1 - y2);
+        }
+
 }
 //Slots
 void ViewerWidget::paintEvent(QPaintEvent* event)//головна функція яку викликає qt

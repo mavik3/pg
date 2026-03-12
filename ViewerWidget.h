@@ -53,7 +53,7 @@ public:
     void drawCirclePoints(int xc, int yc, int x, int y, QColor color);
     void drawPolygon(const QVector<QPoint>& pts, QColor color, int algLine, bool closed = true);
 
-
+    void OsSum();
     QVector<QPoint>& getPolygonPoints() { return polygonPoints; }
     void clearPolygon() { polygonPoints.clear(); polygonFinished = false; }
     bool getPolygonFinished() { return polygonFinished; }

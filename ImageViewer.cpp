@@ -80,8 +80,6 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
             if(w->getPolygonFinished()){
                 w->clear();
                 w->setPolygonFinished(false);
-
-
             }
             w->getPolygonPoints().push_back(e->pos());
 
@@ -274,6 +272,12 @@ void ImageViewer::on_Shear_clicked(){
     double pS = ui->spinShear->value();
     vW->Shear(pS, ui->comboBoxShear->currentIndex());
     vW->redrawPolygon(globalColor,ui->comboBoxLineAlg->currentIndex());
+}
+
+void ImageViewer::on_OsSum_clicked(){
+    vW->OsSum();
+    vW->redrawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex());
+
 }
 
 void ImageViewer::on_pushButtonSetColor_clicked()
