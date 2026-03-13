@@ -75,6 +75,7 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
     if (ui->Polygon->isChecked())
     {
 
+        ui->Move->setChecked(false);
         if (e->button() == Qt::LeftButton)
         {
             if(w->getPolygonFinished()){
@@ -120,13 +121,15 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
         }
     }
     // почати посування готового полігону
-    if (ui->Move->isChecked() && w->getPolygonFinished())
+    else if (ui->Move->isChecked() && w->getPolygonFinished())
     {
-        QMouseEvent* e = static_cast<QMouseEvent*>(event);
-
+        ui->Polygon->setChecked(false);
+        if (vW->getPolygonPoints().size() <= 2)
+        w->CyrBec();
         if (e->button() == Qt::LeftButton) {
             w->setDraggingPolygon(true);
             w->setLastMousePos(e->pos());
+
            // if (ui->comboBoxLineAlg->currentIndex() == 2){
 
           //  }
@@ -134,6 +137,7 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
         if (e->button() == Qt::RightButton){
             w->setDraggingPolygon(false);
             w->setLastMousePos(e->pos());
+
           //  if(ui->comboBoxLineAlg->currentIndex() == 2){
 
           //  }

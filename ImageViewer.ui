@@ -101,7 +101,7 @@
         <string>Draw</string>
        </property>
        <layout class="QGridLayout" name="gridLayout">
-        <item row="0" column="0" colspan="3">
+        <item row="0" column="0" colspan="4">
          <widget class="QComboBox" name="comboBoxLineAlg">
           <item>
            <property name="text">
@@ -120,7 +120,7 @@
           </item>
          </widget>
         </item>
-        <item row="1" column="2">
+        <item row="1" column="3">
          <spacer name="horizontalSpacer">
           <property name="orientation">
            <enum>Qt::Orientation::Horizontal</enum>
@@ -140,14 +140,14 @@
           </property>
          </widget>
         </item>
+        <item row="1" column="2">
+         <widget class="QRadioButton" name="Move">
+          <property name="text">
+           <string>Move</string>
+          </property>
+         </widget>
+        </item>
        </layout>
-      </widget>
-     </item>
-     <item>
-      <widget class="QRadioButton" name="Move">
-       <property name="text">
-        <string>Move</string>
-       </property>
       </widget>
      </item>
      <item>

@@ -74,7 +74,7 @@ public:
 
     void rotation(double k);
 
-    void CyrBec(QVector<QPoint> p);
+    void CyrBec();
 
 public slots:
 	void paintEvent(QPaintEvent* event) Q_DECL_OVERRIDE;

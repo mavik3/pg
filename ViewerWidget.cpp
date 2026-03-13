@@ -432,6 +432,65 @@ void ViewerWidget::OsSum(){
 }
 
 
+void ViewerWidget::CyrBec(){
+
+    QVector<QPoint> E;
+    E.push_back(QPoint(0, 0));
+    E.push_back(QPoint(img->width() - 1, 0));
+    E.push_back(QPoint(img->width() - 1, img->height() - 1));
+    E.push_back(QPoint(0, img->height() - 1));
+
+
+    double tL = 0.0, tU = 1.0;
+    QPoint p1 = polygonPoints[0];
+    QPoint p2 = polygonPoints[1];
+    QPoint d = {p2.x() - p1.x(),p2.y() - p1.y()};
+    int Es = E.size();
+
+    for (int i = 0; i < Es; i++){
+
+            QPoint Pe0 = E[i];
+            QPoint Pe1 = E[(i + 1) % Es];
+            QPoint Ev(Pe1.x() - Pe0.x(), Pe1.y() - Pe0.y());
+             // зовнішня нормаль для CCW полігона
+            QPoint n(Ev.y(), -Ev.x());
+
+            // вектор від точки ребра до початку відрізка
+            QPoint w(p1.x() - Pe0.x(), p1.y() - Pe0.y());
+
+            double d_n = d.x() * n.x() + d.y() * n.y();
+            double w_n = w.x() * n.x() + w.y() * n.y();
+
+            // паралельний ребру
+            if (d_n == 0)
+            {
+                // якщо зовні - відрізок повністю невидимий
+                if (w_n > 0)
+                    return;
+
+                // інакше це ребро нічого не міняє
+                continue;
+            }
+
+            double t = -w_n / d_n;
+
+            if (d_n < 0){ /* вхідна точка*/tL = std::max(tL,t);}
+            else{  /* вихідна точка*/tU = std::min(tU,t);}
+
+            if (tL > tU)
+                return;
+        }
+        polygonPoints[0].setX(p1.x() + static_cast<int>(tL * d.x()));
+        polygonPoints[0].setY(p1.y() + static_cast<int>(tL * d.y()));
+
+        polygonPoints[1].setX(p1.x() + static_cast<int>(tU * d.x()));
+        polygonPoints[1].setY(p1.y() + static_cast<int>(tU * d.y()));
+    }
+
+
+
+
+
 
 //Slots
 void ViewerWidget::paintEvent(QPaintEvent* event)//головна функція яку викликає qt
