@@ -430,6 +430,9 @@ void ViewerWidget::OsSum(){
         }
 
 }
+
+
+
 //Slots
 void ViewerWidget::paintEvent(QPaintEvent* event)//головна функція яку викликає qt
 {
