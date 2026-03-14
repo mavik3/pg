@@ -475,7 +475,7 @@ void ViewerWidget::CyrBec(){
             double t = -w_n / d_n;
 
             if (d_n < 0){ /* вхідна точка*/tL = std::max(tL,t);}
-            else{  /* вихідна точка*/tU = std::min(tU,t);}
+            else{  /* вихідна   точка*/tU = std::min(tU,t);}
 
             if (tL > tU)
                 return;
@@ -485,7 +485,33 @@ void ViewerWidget::CyrBec(){
 
         polygonPoints[1].setX(p1.x() + static_cast<int>(tU * d.x()));
         polygonPoints[1].setY(p1.y() + static_cast<int>(tU * d.y()));
+}
+void ViewerWidget::SutHod(){
+
+    if (!img || polygonPoints.size() < 3) return;
+    QVector<QPoint> V = polygonPoints;
+
+    QVector<QPoint> W;
+    QPoint S = {V[V.size() - 1].x(),V[V.size() - 1].y()};
+    for (int i = 0; i < V.size(); i++){
+        if (V[i].x() > 0){
+            if(S.x() >= 0){
+                W.append(V[i]);
+            }
+            else
+                W.append({0 ,S.y() - (S.x() / (V[i].x() - S.x())) * (V[i].y() - S.y())});
+        }
+        else{
+            if (S.x() >= 0){
+                W.append({0 ,S.y() - (S.x() / (V[i].x() - S.x())) * (V[i].y() - S.y())});
+            }
+        }
+        S = V[i];
     }
+    polygonPoints.clear();
+    for (QPoint p : W) {polygonPoints.append(p);}
+
+}
 
 
 

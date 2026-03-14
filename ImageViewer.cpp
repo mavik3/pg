@@ -126,6 +126,7 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
         ui->Polygon->setChecked(false);
         if (vW->getPolygonPoints().size() <= 2)
         w->CyrBec();
+        w->SutHod();
         if (e->button() == Qt::LeftButton) {
             w->setDraggingPolygon(true);
             w->setLastMousePos(e->pos());
@@ -180,6 +181,15 @@ void ImageViewer::ViewerWidgetEnter(ViewerWidget* w, QEvent* event)
 void ImageViewer::ViewerWidgetWheel(ViewerWidget* w, QEvent* event)
 {
 	QWheelEvent* wheelEvent = static_cast<QWheelEvent*>(event);
+    {
+        QWheelEvent* e = static_cast<QWheelEvent*>(event);
+
+        double factor = (e->angleDelta().y() > 0) ? 1.25 : 0.75;
+
+        QVector<QPoint> p = w->getPolygonPoints();
+        vW->Scale(factor,factor);
+        vW->redrawPolygon(globalColor,ui->comboBoxLineAlg->currentIndex());
+    }
 }
 
 //ImageViewer Events
@@ -263,6 +273,7 @@ void ImageViewer::on_actionExit_triggered()
 void ImageViewer::on_Rotation_clicked(){
     double k = ui->spinRotation->value();
     vW->rotation(k);
+    vW->SutHod();
     vW->redrawPolygon(globalColor,ui->comboBoxLineAlg->currentIndex());
 }
 
@@ -270,16 +281,19 @@ void ImageViewer::on_Scale_clicked(){
     double x = ui->spinX->value();
     double y = ui->spinY->value();
     vW->Scale(x, y);
+    vW->SutHod();
     vW->redrawPolygon(globalColor,ui->comboBoxLineAlg->currentIndex());
 }
 void ImageViewer::on_Shear_clicked(){
     double pS = ui->spinShear->value();
     vW->Shear(pS, ui->comboBoxShear->currentIndex());
+    vW->SutHod();
     vW->redrawPolygon(globalColor,ui->comboBoxLineAlg->currentIndex());
 }
 
 void ImageViewer::on_OsSum_clicked(){
     vW->OsSum();
+    vW->SutHod();
     vW->redrawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex());
 
 }
