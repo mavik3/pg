@@ -17,6 +17,7 @@ private:
 
     bool draggingPolygon = false;
     QPoint lastMousePos = QPoint(0, 0);
+    bool Scan = false;
 
 public:
 	ViewerWidget(QSize imgSize, QWidget* parent = Q_NULLPTR);
@@ -67,8 +68,7 @@ public:
     void setLastMousePos(QPoint p) { lastMousePos = p; }
 
     void movePolygon(int dx, int dy);
-    void redrawPolygon(const QColor& color, int algType);
-
+    void redrawPolygon(const QColor& color, int algType, bool scan);
     void Scale(double x, double y);
     void Shear(double pS, int algType);
 
@@ -78,7 +78,10 @@ public:
     void CyrBec();
     void SutHod();
 
-    void Scan_line(QColor& color);
+    void Scan_line(const QColor& color);
+
+    void setScan(bool state){Scan = state;}
+    bool getScan(){return Scan;}
 
 
 

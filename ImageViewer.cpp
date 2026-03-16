@@ -112,6 +112,9 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
                     ui->comboBoxLineAlg->currentIndex(),
                     true
                     );
+                if (ui->ScanLine->isChecked()){
+                    w->Scan_line(globalColor);
+                }
             }
             else if (pts.size() == 2)
             {
@@ -147,6 +150,7 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 
         return;
     }
+
 }
 
 
@@ -169,7 +173,7 @@ void ImageViewer::ViewerWidgetMouseMove(ViewerWidget* w, QEvent* event)
     w->movePolygon(dx, dy);
     w->setLastMousePos(currentPos);
 
-    w->redrawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex());
+    w->redrawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex(),ui->ScanLine->isChecked());
 
 }
 
@@ -189,7 +193,7 @@ void ImageViewer::ViewerWidgetWheel(ViewerWidget* w, QEvent* event)
 
         QVector<QPoint> p = w->getPolygonPoints();
         vW->Scale(factor,factor);
-        vW->redrawPolygon(globalColor,ui->comboBoxLineAlg->currentIndex());
+        vW->redrawPolygon(globalColor,ui->comboBoxLineAlg->currentIndex(),ui->ScanLine->isChecked());
     }
 }
 
@@ -275,7 +279,7 @@ void ImageViewer::on_Rotation_clicked(){
     double k = ui->spinRotation->value();
     vW->rotation(k);
     vW->SutHod();
-    vW->redrawPolygon(globalColor,ui->comboBoxLineAlg->currentIndex());
+    vW->redrawPolygon(globalColor,ui->comboBoxLineAlg->currentIndex(),ui->ScanLine->isChecked());
 }
 
 void ImageViewer::on_Scale_clicked(){
@@ -283,19 +287,19 @@ void ImageViewer::on_Scale_clicked(){
     double y = ui->spinY->value();
     vW->Scale(x, y);
     vW->SutHod();
-    vW->redrawPolygon(globalColor,ui->comboBoxLineAlg->currentIndex());
+    vW->redrawPolygon(globalColor,ui->comboBoxLineAlg->currentIndex(),ui->ScanLine->isChecked());
 }
 void ImageViewer::on_Shear_clicked(){
     double pS = ui->spinShear->value();
     vW->Shear(pS, ui->comboBoxShear->currentIndex());
     vW->SutHod();
-    vW->redrawPolygon(globalColor,ui->comboBoxLineAlg->currentIndex());
+    vW->redrawPolygon(globalColor,ui->comboBoxLineAlg->currentIndex(),ui->ScanLine->isChecked());
 }
 
 void ImageViewer::on_OsSum_clicked(){
     vW->OsSum();
     vW->SutHod();
-    vW->redrawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex());
+    vW->redrawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex(),ui->ScanLine->isChecked());
 
 }
 

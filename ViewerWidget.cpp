@@ -1,6 +1,7 @@
  #include   "ViewerWidget.h"
 #include <cmath>
 #include <QtMath>
+#include <algorithm>
 
 ViewerWidget::ViewerWidget(QSize imgSize, QWidget* parent)
 	: QWidget(parent)
@@ -326,9 +327,12 @@ void ViewerWidget::drawPolygon(const QVector<QPoint>& pts, QColor color, int alg
     else {
         drawLineCircle(pts[0], pts[1], color);
     }
-    if (closed && pts.size() >= 3){
+    if (closed && pts.size() > 3){
         if (algType == 0) drawLineDDA(start, pts[0], color);
         else if (algType == 1) drawLineBresenham(start, pts[0], color);
+    }
+    else if(closed && pts.size() == 3){
+
     }
     update();
 }
@@ -341,7 +345,7 @@ void ViewerWidget::movePolygon(int dx, int dy)
     }
 }
 
-void ViewerWidget::redrawPolygon(const QColor& color, int algType)
+void ViewerWidget::redrawPolygon(const QColor& color, int algType, bool scan)
 {
     if (!img) return;
 
@@ -349,6 +353,7 @@ void ViewerWidget::redrawPolygon(const QColor& color, int algType)
 
     if (polygonPoints.size() >= 2) {
         drawPolygon(polygonPoints, color, algType, true);
+        if (scan){Scan_line(color);}
     }
 
     update();
@@ -392,6 +397,17 @@ void ViewerWidget::Scale(double sx, double sy)
     if (sx != 0) { double nx = cx + (p.x() - cx) * sx; p.setX(nx); }
     if (sy != 0) { double ny = cy + (p.y() - cy) * sy; p.setY(ny); }
 }
+    if (polygonPoints.size() == 1) {
+        QPoint c = polygonPoints[0];
+
+        double s = std::max(std::abs(sx), std::abs(sy));
+        if (s <= 0.0) s = 1.0;
+
+        int r = qMax(1, qRound(20.0 * s)); // 20 - базовий радіус
+
+        polygonPoints.push_back(QPoint(c.x() + r, c.y()));
+        return;
+    }
 }
 void ViewerWidget::Shear(double pS,int algType){
     if (polygonPoints.size() < 2 || !img) return;
@@ -590,12 +606,70 @@ void ViewerWidget::SutHod()
 
     polygonPoints = V;
 }
-void ViewerWidget::Scan_line(QColor& color){
-    for (int i = 0; i < polygonPoints.size(); i++){
+void ViewerWidget::Scan_line(const QColor& color)
+{
+    if (!img || polygonPoints.size() < 3)
+        return;
 
+    int ymin = polygonPoints[0].y();
+    int ymax = polygonPoints[0].y();
+
+    // знайти вертикальні межі полігона
+    for (const QPoint& p : polygonPoints) {
+        if (p.y() < ymin) ymin = p.y();
+        if (p.y() > ymax) ymax = p.y();
+    }
+
+    // обрізка по межах зображення
+    ymin = std::max(0, ymin);
+    ymax = std::min(img->height() - 1, ymax);
+
+    // проходимо по кожному scan-line
+    for (int y = ymin; y <= ymax; y++) {
+        QVector<int> xYes;
+
+        // шукаємо всі перетини рядка y з ребрами полігона
+        for (int i = 0; i < polygonPoints.size(); i++) {
+            QPoint p1 = polygonPoints[i];
+            QPoint p2 = polygonPoints[(i + 1) % polygonPoints.size()];
+
+            // горизонтальні ребра пропускаємо
+            if (p1.y() == p2.y())
+                continue;
+
+            // впорядковуємо по y
+            if (p1.y() > p2.y())
+                std::swap(p1, p2);
+
+            // правило: включаємо нижню вершину, не включаємо верхню
+            if (y >= p1.y() && y < p2.y()) {
+                double x = p1.x() + (double)(y - p1.y()) *
+                                        (p2.x() - p1.x()) / (double)(p2.y() - p1.y());
+
+                xYes.push_back(qRound(x));
+            }
+        }
+
+        // сортуємо всі x-перетини
+        std::sort(xYes.begin(), xYes.end());
+
+        // зафарбовуємо попарно
+        for (int i = 0; i + 1 < xYes.size(); i += 2) {
+            int xStart = xYes[i];
+            int xEnd   = xYes[i + 1];
+
+            if (xStart > xEnd)
+                std::swap(xStart, xEnd);
+
+            xStart = std::max(0, xStart);
+            xEnd   = std::min(img->width() - 1, xEnd);
+
+            for (int x = xStart; x <= xEnd; x++) {
+                setPixel(x, y, color);
+            }
+        }
     }
 }
-
 
 
 
