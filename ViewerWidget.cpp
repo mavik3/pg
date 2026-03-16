@@ -434,6 +434,8 @@ void ViewerWidget::OsSum(){
 
 void ViewerWidget::CyrBec(){
 
+    if (!img || polygonPoints.size() != 2) return;
+
     QVector<QPoint> E;
     E.push_back(QPoint(0, 0));
     E.push_back(QPoint(img->width() - 1, 0));
@@ -486,31 +488,112 @@ void ViewerWidget::CyrBec(){
         polygonPoints[1].setX(p1.x() + static_cast<int>(tU * d.x()));
         polygonPoints[1].setY(p1.y() + static_cast<int>(tU * d.y()));
 }
-void ViewerWidget::SutHod(){
-
+void ViewerWidget::SutHod()
+{
     if (!img || polygonPoints.size() < 3) return;
+
     QVector<QPoint> V = polygonPoints;
-
     QVector<QPoint> W;
-    QPoint S = {V[V.size() - 1].x(),V[V.size() - 1].y()};
-    for (int i = 0; i < V.size(); i++){
-        if (V[i].x() > 0){
-            if(S.x() >= 0){
-                W.append(V[i]);
-            }
-            else
-                W.append({0 ,S.y() - (S.x() / (V[i].x() - S.x())) * (V[i].y() - S.y())});
-        }
-        else{
-            if (S.x() >= 0){
-                W.append({0 ,S.y() - (S.x() / (V[i].x() - S.x())) * (V[i].y() - S.y())});
-            }
-        }
-        S = V[i];
-    }
-    polygonPoints.clear();
-    for (QPoint p : W) {polygonPoints.append(p);}
 
+    int xmin = 0;
+    int ymin = 0;
+    int xmax = img->width() - 1;
+    int ymax = img->height() - 1;
+
+    for (int border = 0; border < 4; border++) {
+
+        if (V.isEmpty()) {
+            polygonPoints.clear();
+            return;
+        }
+
+        W.clear();
+        QPoint S = V.last();
+
+        for (int i = 0; i < V.size(); i++) {
+            QPoint P = V[i];
+
+            bool Sin = false;
+            bool Pin = false;
+
+            if (border == 0) { // ліва межа: x >= xmin
+                Sin = (S.x() >= xmin);
+                Pin = (P.x() >= xmin);
+            }
+            else if (border == 1) { // права межа: x <= xmax
+                Sin = (S.x() <= xmax);
+                Pin = (P.x() <= xmax);
+            }
+            else if (border == 2) { // верхня межа: y >= ymin
+                Sin = (S.y() >= ymin);
+                Pin = (P.y() >= ymin);
+            }
+            else if (border == 3) { // нижня межа: y <= ymax
+                Sin = (S.y() <= ymax);
+                Pin = (P.y() <= ymax);
+            }
+
+            if (Pin) {
+                if (Sin) {
+                    // inside -> inside
+                    W.append(P);
+                }
+                else {
+                    // outside -> inside
+                    QPoint I;
+
+                    if (border == 0 || border == 1) {
+                        int xEdge = (border == 0) ? xmin : xmax;
+                        double t = double(xEdge - S.x()) / double(P.x() - S.x());
+                        int y = qRound(S.y() + t * (P.y() - S.y()));
+                        I = QPoint(xEdge, y);
+                    }
+                    else {
+                        int yEdge = (border == 2) ? ymin : ymax;
+                        double t = double(yEdge - S.y()) / double(P.y() - S.y());
+                        int x = qRound(S.x() + t * (P.x() - S.x()));
+                        I = QPoint(x, yEdge);
+                    }
+
+                    W.append(I);
+                    W.append(P);
+                }
+            }
+            else {
+                if (Sin) {
+                    // inside -> outside
+                    QPoint I;
+
+                    if (border == 0 || border == 1) {
+                        int xEdge = (border == 0) ? xmin : xmax;
+                        double t = double(xEdge - S.x()) / double(P.x() - S.x());
+                        int y = qRound(S.y() + t * (P.y() - S.y()));
+                        I = QPoint(xEdge, y);
+                    }
+                    else if (border == 2 || border == 3) {
+                        int yEdge = (border == 2) ? ymin : ymax;
+                        double t = double(yEdge - S.y()) / double(P.y() - S.y());
+                        int x = qRound(S.x() + t * (P.x() - S.x()));
+                        I = QPoint(x, yEdge);
+                    }
+
+                    W.append(I);
+                }
+                // outside -> outside : нічого
+            }
+
+            S = P;
+        }
+
+        V = W;
+    }
+
+    polygonPoints = V;
+}
+void ViewerWidget::Scan_line(QColor& color){
+    for (int i = 0; i < polygonPoints.size(); i++){
+
+    }
 }
 
 

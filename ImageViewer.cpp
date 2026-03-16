@@ -124,9 +124,6 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
     else if (ui->Move->isChecked() && w->getPolygonFinished())
     {
         ui->Polygon->setChecked(false);
-        if (vW->getPolygonPoints().size() <= 2)
-        w->CyrBec();
-        w->SutHod();
         if (e->button() == Qt::LeftButton) {
             w->setDraggingPolygon(true);
             w->setLastMousePos(e->pos());
@@ -137,6 +134,10 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
         }
         if (e->button() == Qt::RightButton){
             w->setDraggingPolygon(false);
+            if (vW->getPolygonPoints().size() > 2)
+                w->SutHod();
+            if (vW->getPolygonPoints().size() == 2)
+                w->CyrBec();
             w->setLastMousePos(e->pos());
 
           //  if(ui->comboBoxLineAlg->currentIndex() == 2){

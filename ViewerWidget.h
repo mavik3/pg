@@ -78,6 +78,10 @@ public:
     void CyrBec();
     void SutHod();
 
+    void Scan_line(QColor& color);
+
+
+
 public slots:
 	void paintEvent(QPaintEvent* event) Q_DECL_OVERRIDE;
 };
