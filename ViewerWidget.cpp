@@ -2,6 +2,7 @@
 #include <cmath>
 #include <QtMath>
 #include <algorithm>
+#include <QVector2D>
 
 ViewerWidget::ViewerWidget(QSize imgSize, QWidget* parent)
 	: QWidget(parent)
@@ -142,13 +143,13 @@ void ViewerWidget::drawLine(QPoint start, QPoint end, QColor color, int algType)
     update();//малює лінію і обновляє*/
 }
 
-void ViewerWidget::clear()
-{
-    if (!img) return;//якщо пустий то повертаємо
+void ViewerWidget::clear() {
+    if (!img) return;
     img->fill(Qt::white);
-    polygonPoints.clear();
+    originalPoints.clear(); // Очищаємо оригінал
+    polygonPoints.clear();  // Очищаємо робочий вектор
     polygonFinished = false;
-    update();//обновляємо
+    update();
 }
 
 void ViewerWidget::drawLineDDA(QPoint start, QPoint end, QColor color)
@@ -309,63 +310,62 @@ void ViewerWidget::drawCirclePoints(int xc, int yc, int x, int y, QColor color)
     setPixel(xc + y, yc - x, color);
     setPixel(xc - y, yc - x, color);
 }
-void ViewerWidget::drawPolygon(const QVector<QPoint>& pts, QColor color, int algType, bool closed){
-    if (!img || !data) return;
-    if (pts.size() < 2 ) return;
-    QPoint start = pts[0];
-    if (algType != 2){
-        for (int i = 1; i < pts.size(); ++i){
-            QPoint end = pts[i];
+void ViewerWidget::drawPolygon(const QVector<QPoint>& pts, QColor color, int algType, bool closed) {
+    if (pts.size() < 2) return;
 
-            if (algType == 0) drawLineDDA(start, end, color);
-            else if (algType == 1) drawLineBresenham(start, end, color);
-
-    // (algType == 2) drawLineCircle(start, end, color);
-        start = end;
-        }
+    for (int i = 0; i < pts.size() - 1; ++i) {
+        drawLine(pts[i], pts[i+1], color, algType);
     }
-    else {
-        drawLineCircle(pts[0], pts[1], color);
-    }
-    if (closed && pts.size() > 3){
-        if (algType == 0) drawLineDDA(start, pts[0], color);
-        else if (algType == 1) drawLineBresenham(start, pts[0], color);
-    }
-    else if(closed && pts.size() == 3){
 
-    }
-    update();
-}
-
-
-void ViewerWidget::movePolygon(int dx, int dy)
-{
-    for (QPoint& p : polygonPoints) {
-        p += QPoint(dx, dy);
+    if (closed && pts.size() >= 3) {
+        drawLine(pts.last(), pts.first(), color, algType); // Замикаємо полігон правильно
     }
 }
 
 void ViewerWidget::redrawPolygon(const QColor& color, int algType, bool scan)
 {
     if (!img) return;
-
     img->fill(Qt::white);
 
-    if (polygonPoints.size() >= 2) {
-        drawPolygon(polygonPoints, color, algType, true);
-        if (scan){Scan_line(color);}
+    // ВИПАДОК 1: Малюємо окремі лінії (поки полігон не завершено ПКМ)
+    if (!polygonFinished) {
+        if (originalPoints.size() >= 2) {
+            // Використовуємо Сайрус-Бек для кожного відрізка в ланцюжку
+            for (int i = 0; i < originalPoints.size() - 1; i++) {
+                QVector<QPoint> clipped = calculateCyrusBeckLine(originalPoints[i], originalPoints[i+1]);
+                if (clipped.size() == 2) {
+                    drawLine(clipped[0], clipped[1], color, algType);
+                }
+            }
+        }
     }
+    // ВИПАДОК 2: Малюємо готовий полігон (після натискання ПКМ)
+    else {
+        // Використовуємо Сазерленд-Ходжман (він повертає замкнений вектор)
+        QVector<QPoint> clippedPoly = calculateClippedPolygon(originalPoints);
 
+        if (!clippedPoly.isEmpty()) {
+            drawPolygon(clippedPoly, color, algType, true); // true = замикати
+
+            // Якщо увімкнено заповнення
+            if (scan && clippedPoly.size() >= 3) {
+                QVector<QPoint> backup = polygonPoints;
+                polygonPoints = clippedPoly;
+                Scan_line(color);
+                polygonPoints = backup;
+            }
+        }
+    }
     update();
 }
 
 
 void ViewerWidget::rotation(double k){
-    if(polygonPoints.size() < 2 || !img) return;
+    if(originalPoints.size() < 2 || !img) return;
 
     double rad = k * M_PI / 180.0;
-    QPoint center = polygonPoints[0];
-    for (QPoint& p : polygonPoints){
+    QPoint center = originalPoints[0];
+    for (QPoint& p : originalPoints){
         double x = p.x() - center.x();
         double y = p.y() - center.y();
 
@@ -381,23 +381,23 @@ void ViewerWidget::rotation(double k){
 
 void ViewerWidget::Scale(double sx, double sy)
 {
-    if (polygonPoints.isEmpty() || !img) return;
+    if (originalPoints.isEmpty() || !img) return;
 
     double cx = 0.0;
     double cy = 0.0;
 
-    for (const QPoint& p : polygonPoints) {
+    for (const QPoint& p : originalPoints) {
         cx += p.x();
         cy += p.y();
     }
 
-    cx /= polygonPoints.size();
-    cy /= polygonPoints.size();
-    for (QPoint& p : polygonPoints) {
+    cx /= originalPoints.size();
+    cy /= originalPoints.size();
+    for (QPoint& p : originalPoints) {
     if (sx != 0) { double nx = cx + (p.x() - cx) * sx; p.setX(nx); }
     if (sy != 0) { double ny = cy + (p.y() - cy) * sy; p.setY(ny); }
 }
-    if (polygonPoints.size() == 1) {
+    /*if (polygonPoints.size() == 1) {
         QPoint c = polygonPoints[0];
 
         double s = std::max(std::abs(sx), std::abs(sy));
@@ -407,204 +407,150 @@ void ViewerWidget::Scale(double sx, double sy)
 
         polygonPoints.push_back(QPoint(c.x() + r, c.y()));
         return;
-    }
+    }*/
 }
 void ViewerWidget::Shear(double pS,int algType){
-    if (polygonPoints.size() < 2 || !img) return;
+    if (originalPoints.size() < 2 || !img) return;
 
-    if (algType == 0){
-        for (int i = 0; i < polygonPoints.size(); i ++) {
-            double nx = polygonPoints[i].x() + polygonPoints[i].y() * pS; polygonPoints[i].setX(nx);
-
-        }
-    }
-    if (algType == 1){
-        for (int i = 0; i < polygonPoints.size(); i++) {
-            double ny = polygonPoints[i].y() + polygonPoints[i].x() * pS; polygonPoints[i].setY(ny);
+    for (QPoint& p : originalPoints) {
+        if (algType == 0) { // Shear X
+            p.setX(p.x() + qRound(p.y() * pS));
+        } else { // Shear Y
+            p.setY(p.y() + qRound(p.x() * pS));
         }
     }
 }
+
+void ViewerWidget::movePolygon(int dx, int dy) {
+    for (QPoint& p : originalPoints) { // Рухаємо тільки оригінал!
+        p.setX(p.x() + dx);
+        p.setY(p.y() + dy);
+    }
+}
+
+
 void ViewerWidget::OsSum(){
-    if (polygonPoints.size() < 2 || !img) return;
+    if (originalPoints.size() < 2 || !img) return;
    // if (polygonPoints.size() == 2){}
   //  else if (polygonPoints.size() > 2){}
-    int x1 = polygonPoints[0].x(), x2 = polygonPoints[1].x();
-        int y1 = polygonPoints[0].y(), y2 = polygonPoints[1].y();
+    int x1 = originalPoints[0].x(), x2 = originalPoints[1].x();
+        int y1 = originalPoints[0].y(), y2 = originalPoints[1].y();
         int Vx = x2 - x1, Vy = y2 - y1;
         double a = Vy, b = -Vx, c = - a * x1 - b * y1;
 
-        if (polygonPoints.size() > 2){
-            for (int i = 1; i < polygonPoints.size(); i++){
-            double xN = polygonPoints[i].x() - 2 * a * ((a * polygonPoints[i].x() + b * polygonPoints[i].y() + c) / (a * a + b * b));
-            double yN = polygonPoints[i].y() - 2 * b * ((a * polygonPoints[i].x() + b * polygonPoints[i].y() + c) / (a * a + b * b));
-            polygonPoints[i].setX(xN), polygonPoints[i].setY(yN);
+        if (originalPoints.size() > 2){
+            for (int i = 1; i < originalPoints.size(); i++){
+            double xN = originalPoints[i].x() - 2 * a * ((a * originalPoints[i].x() + b * originalPoints[i].y() + c) / (a * a + b * b));
+            double yN = originalPoints[i].y() - 2 * b * ((a * originalPoints[i].x() + b * originalPoints[i].y() + c) / (a * a + b * b));
+            originalPoints[i].setX(xN), originalPoints[i].setY(yN);
         }
         }
-        else if (polygonPoints.size() == 2){
-            polygonPoints[1].setX(x2);
-            polygonPoints[1].setY(2 * y1 - y2);
+        else if (originalPoints.size() == 2){
+            originalPoints[1].setX(x2);
+            originalPoints[1].setY(2 * y1 - y2);
         }
 
 }
 
 
-void ViewerWidget::CyrBec(){
-
-    if (!img || polygonPoints.size() != 2) return;
-
-    QVector<QPoint> E;
-    E.push_back(QPoint(0, 0));
-    E.push_back(QPoint(img->width() - 1, 0));
-    E.push_back(QPoint(img->width() - 1, img->height() - 1));
-    E.push_back(QPoint(0, img->height() - 1));
-
-
-    double tL = 0.0, tU = 1.0;
-    QPoint p1 = polygonPoints[0];
-    QPoint p2 = polygonPoints[1];
-    QPoint d = {p2.x() - p1.x(),p2.y() - p1.y()};
-    int Es = E.size();
-
-    for (int i = 0; i < Es; i++){
-
-            QPoint Pe0 = E[i];
-            QPoint Pe1 = E[(i + 1) % Es];
-            QPoint Ev(Pe1.x() - Pe0.x(), Pe1.y() - Pe0.y());
-             // зовнішня нормаль для CCW полігона
-            QPoint n(Ev.y(), -Ev.x());
-
-            // вектор від точки ребра до початку відрізка
-            QPoint w(p1.x() - Pe0.x(), p1.y() - Pe0.y());
-
-            double d_n = d.x() * n.x() + d.y() * n.y();
-            double w_n = w.x() * n.x() + w.y() * n.y();
-
-            // паралельний ребру
-            if (d_n == 0)
-            {
-                // якщо зовні - відрізок повністю невидимий
-                if (w_n > 0)
-                    return;
-
-                // інакше це ребро нічого не міняє
-                continue;
-            }
-
-            double t = -w_n / d_n;
-
-            if (d_n < 0){ /* вхідна точка*/tL = std::max(tL,t);}
-            else{  /* вихідна   точка*/tU = std::min(tU,t);}
-
-            if (tL > tU)
-                return;
-        }
-        polygonPoints[0].setX(p1.x() + static_cast<int>(tL * d.x()));
-        polygonPoints[0].setY(p1.y() + static_cast<int>(tL * d.y()));
-
-        polygonPoints[1].setX(p1.x() + static_cast<int>(tU * d.x()));
-        polygonPoints[1].setY(p1.y() + static_cast<int>(tU * d.y()));
-}
-void ViewerWidget::SutHod()
+QVector<QPoint> ViewerWidget::calculateCyrusBeckLine(QPoint S, QPoint E)
 {
-    if (!img || polygonPoints.size() < 3) return;
+    QVector<QPoint> viewerWidgetEdges;
+    viewerWidgetEdges.push_back(QPoint(0, 0));
+    viewerWidgetEdges.push_back(QPoint(0, img->height()));
+    viewerWidgetEdges.push_back(QPoint(img->width(), img->height()));
+    viewerWidgetEdges.push_back(QPoint(img->width(), 0));
 
-    QVector<QPoint> V = polygonPoints;
+    double tL = 0.0;
+    double tU = 1.0;
+    QPoint d(polygonPoints[1].x() -polygonPoints[0].x(), polygonPoints[1].y() - polygonPoints[0].y());
+
+    qsizetype i = 0;
+    while (i < viewerWidgetEdges.size())
+    {
+        QPoint normal;
+        if(i == viewerWidgetEdges.size() - 1) // upper edge
+        {
+            normal.setX(viewerWidgetEdges.back().y() - viewerWidgetEdges.front().y());
+            normal.setY(-(viewerWidgetEdges.back().x() - viewerWidgetEdges.front().x()));
+        }
+        else // other edges
+        {
+            normal.setX(viewerWidgetEdges[i + 1].y() - viewerWidgetEdges[i].y());
+            normal.setY(-(viewerWidgetEdges[i + 1].x() - viewerWidgetEdges[i].x()));
+        }
+        QPoint w(polygonPoints[0].x() - viewerWidgetEdges[i].x(), polygonPoints[0].y() - viewerWidgetEdges[i].y());
+
+        int dn = d.x() * normal.x() + d.y() * normal.y();
+        int wn = w.x() * normal.x() + w.y() * normal.y();
+
+        double t = -wn / (double)dn;
+
+        if (dn != 0)
+        {
+            if (dn > 0 && t <= 1)
+                tL = qMax(t, tL);
+            else if (dn < 0 && t >= 0)
+                tU = qMax(t, tU);
+        }
+        i++;
+    }
+
+    if (tL == 0.0 && tU == 1.0)
+    {
+        if (!(polygonPoints[0].x() <= img->width() && polygonPoints[0].x() >= 0 && polygonPoints[0].y() <= img->height() && polygonPoints[0].y() >= 0))
+            return polygonPoints;
+    }
+    else if (tL > 0 && tL < 1 && tU > 0 && tU < 1)
+    {
+        QVector<QPoint> clippedPoints;
+        clippedPoints.push_back(QPoint(polygonPoints[0].x() + ( polygonPoints[1].x() - polygonPoints[0].x() ) * tL + 0.5, polygonPoints[0].y() + (polygonPoints[1].y() - polygonPoints[0].y()) * tL + 0.5));
+        clippedPoints.push_back(QPoint(polygonPoints[0].x() + (polygonPoints[1].x() - polygonPoints[0].x()) * tU + 0.5, polygonPoints[0].y() + (polygonPoints[1].y() - polygonPoints[0].y()) * tU + 0.5));
+        return clippedPoints;
+    }
+
+    return polygonPoints;
+}
+// Функція тепер повертає результат, а не змінює вхідні дані
+QVector<QPoint> ViewerWidget::calculateClippedPolygon(const QVector<QPoint>& sourcePoints) {
+    if (sourcePoints.size() < 3) return sourcePoints;
+
+    QVector<QPoint> V = sourcePoints;
     QVector<QPoint> W;
-
-    int xmin = 0;
-    int ymin = 0;
     int xmax = img->width() - 1;
     int ymax = img->height() - 1;
 
     for (int border = 0; border < 4; border++) {
-
-        if (V.isEmpty()) {
-            polygonPoints.clear();
-            return;
-        }
-
+        if (V.isEmpty()) return {};
         W.clear();
         QPoint S = V.last();
-
         for (int i = 0; i < V.size(); i++) {
             QPoint P = V[i];
-
-            bool Sin = false;
-            bool Pin = false;
-
-            if (border == 0) { // ліва межа: x >= xmin
-                Sin = (S.x() >= xmin);
-                Pin = (P.x() >= xmin);
-            }
-            else if (border == 1) { // права межа: x <= xmax
-                Sin = (S.x() <= xmax);
-                Pin = (P.x() <= xmax);
-            }
-            else if (border == 2) { // верхня межа: y >= ymin
-                Sin = (S.y() >= ymin);
-                Pin = (P.y() >= ymin);
-            }
-            else if (border == 3) { // нижня межа: y <= ymax
-                Sin = (S.y() <= ymax);
-                Pin = (P.y() <= ymax);
-            }
+            bool Sin, Pin;
+            if (border == 0) { Sin = (S.x() >= 0); Pin = (P.x() >= 0); }
+            else if (border == 1) { Sin = (S.x() <= xmax); Pin = (P.x() <= xmax); }
+            else if (border == 2) { Sin = (S.y() >= 0); Pin = (P.y() >= 0); }
+            else { Sin = (S.y() <= ymax); Pin = (P.y() <= ymax); }
 
             if (Pin) {
-                if (Sin) {
-                    // inside -> inside
-                    W.append(P);
+                if (!Sin) { // Outside -> Inside
+                    double t;
+                    if (border < 2) t = (double)((border==0?0:xmax) - S.x()) / (P.x() - S.x());
+                    else t = (double)((border==2?0:ymax) - S.y()) / (P.y() - S.y());
+                    W.append(QPoint(qRound(S.x() + t*(P.x()-S.x())), qRound(S.y() + t*(P.y()-S.y()))));
                 }
-                else {
-                    // outside -> inside
-                    QPoint I;
-
-                    if (border == 0 || border == 1) {
-                        int xEdge = (border == 0) ? xmin : xmax;
-                        double t = double(xEdge - S.x()) / double(P.x() - S.x());
-                        int y = qRound(S.y() + t * (P.y() - S.y()));
-                        I = QPoint(xEdge, y);
-                    }
-                    else {
-                        int yEdge = (border == 2) ? ymin : ymax;
-                        double t = double(yEdge - S.y()) / double(P.y() - S.y());
-                        int x = qRound(S.x() + t * (P.x() - S.x()));
-                        I = QPoint(x, yEdge);
-                    }
-
-                    W.append(I);
-                    W.append(P);
-                }
+                W.append(P);
+            } else if (Sin) { // Inside -> Outside
+                double t;
+                if (border < 2) t = (double)((border==0?0:xmax) - S.x()) / (P.x() - S.x());
+                else t = (double)((border==2?0:ymax) - S.y()) / (P.y() - S.y());
+                W.append(QPoint(qRound(S.x() + t*(P.x()-S.x())), qRound(S.y() + t*(P.y()-S.y()))));
             }
-            else {
-                if (Sin) {
-                    // inside -> outside
-                    QPoint I;
-
-                    if (border == 0 || border == 1) {
-                        int xEdge = (border == 0) ? xmin : xmax;
-                        double t = double(xEdge - S.x()) / double(P.x() - S.x());
-                        int y = qRound(S.y() + t * (P.y() - S.y()));
-                        I = QPoint(xEdge, y);
-                    }
-                    else if (border == 2 || border == 3) {
-                        int yEdge = (border == 2) ? ymin : ymax;
-                        double t = double(yEdge - S.y()) / double(P.y() - S.y());
-                        int x = qRound(S.x() + t * (P.x() - S.x()));
-                        I = QPoint(x, yEdge);
-                    }
-
-                    W.append(I);
-                }
-                // outside -> outside : нічого
-            }
-
             S = P;
         }
-
         V = W;
     }
-
-    polygonPoints = V;
+    return V;
 }
 void ViewerWidget::Scan_line(const QColor& color)
 {
@@ -643,8 +589,7 @@ void ViewerWidget::Scan_line(const QColor& color)
 
             // правило: включаємо нижню вершину, не включаємо верхню
             if (y >= p1.y() && y < p2.y()) {
-                double x = p1.x() + (double)(y - p1.y()) *
-                                        (p2.x() - p1.x()) / (double)(p2.y() - p1.y());
+                double x = p1.x() + (double)(y - p1.y()) * (p2.x() - p1.x()) / (double)(p2.y() - p1.y());
 
                 xYes.push_back(qRound(x));
             }
@@ -670,6 +615,9 @@ void ViewerWidget::Scan_line(const QColor& color)
         }
     }
 }
+//void ViewerWidget::Triangle(const QVector<QPoint>& T){
+
+
 
 
 

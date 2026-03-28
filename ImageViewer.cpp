@@ -72,109 +72,51 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 {
     QMouseEvent* e = static_cast<QMouseEvent*>(event);
 
-    if (ui->Polygon->isChecked())
-    {
-
-        ui->Move->setChecked(false);
-        if (e->button() == Qt::LeftButton)
-        {
-            if(w->getPolygonFinished()){
-                w->clear();
+    if (ui->Polygon->isChecked()) {
+        if (e->button() == Qt::LeftButton) {
+            if (w->getPolygonFinished()) {
+                w->getOriginalPoints().clear(); // Очистить і originalPoints, і екран
                 w->setPolygonFinished(false);
             }
-            w->getPolygonPoints().push_back(e->pos());
-
-            w->setPixel(e->pos().x(), e->pos().y(), globalColor);
-
-            int n = w->getPolygonPoints().size();
-            if (n >= 2) {
-                QPoint a = w->getPolygonPoints()[n - 2];
-                QPoint b = w->getPolygonPoints()[n - 1];
-
-                w->drawLine(a, b, globalColor, ui->comboBoxLineAlg->currentIndex());
-                if(ui->comboBoxLineAlg->currentIndex() == 2){
-                    w->setPolygonFinished(true);
-                }
-            }
-            else {
-                w->update();
-            }
+            // Додаємо в ОРИГІНАЛ
+            w->getOriginalPoints().push_back(e->pos());
         }
-        else if (e->button() == Qt::RightButton)
-        {
-            QVector<QPoint>& pts = w->getPolygonPoints();
-
-            if (pts.size() > 2)
-            {
-                w->drawPolygon(
-                    pts,
-                    globalColor,
-                    ui->comboBoxLineAlg->currentIndex(),
-                    true
-                    );
-                if (ui->ScanLine->isChecked()){
-                    w->Scan_line(globalColor);
-                }
-            }
-            else if (pts.size() == 2)
-            {
-                w->drawLine(pts[0],pts[1],globalColor,ui->comboBoxLineAlg->currentIndex());
-            }
+        else if (e->button() == Qt::RightButton) {
             w->setPolygonFinished(true);
         }
+        w->redrawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex(), ui->ScanLine->isChecked());
+
     }
-    // почати посування готового полігону
-    else if (ui->Move->isChecked() && w->getPolygonFinished())
-    {
-        ui->Polygon->setChecked(false);
-        if (e->button() == Qt::LeftButton) {
-            w->setDraggingPolygon(true);
-            w->setLastMousePos(e->pos());
-
-           // if (ui->comboBoxLineAlg->currentIndex() == 2){
-
-          //  }
-        }
-        if (e->button() == Qt::RightButton){
-            w->setDraggingPolygon(false);
-            if (vW->getPolygonPoints().size() > 2)
-                w->SutHod();
-            if (vW->getPolygonPoints().size() == 2)
-                w->CyrBec();
-            w->setLastMousePos(e->pos());
-
-          //  if(ui->comboBoxLineAlg->currentIndex() == 2){
-
-          //  }
-        }
-
-        return;
+    if (ui->Move->isChecked() && e->button() == Qt::LeftButton) {
+        w->setDraggingPolygon(true); // Активація режиму перетягування
+        w->setLastMousePos(e->pos());
     }
-
 }
 
 
-void ImageViewer::ViewerWidgetMouseButtonRelease(ViewerWidget* w, QEvent* event)
-{
-	QMouseEvent* e = static_cast<QMouseEvent*>(event);
+
+void ImageViewer::ViewerWidgetMouseButtonRelease(ViewerWidget* w, QEvent* event) {
+    QMouseEvent* e = static_cast<QMouseEvent*>(event);
+    if (e->button() == Qt::LeftButton) {
+        w->setDraggingPolygon(false); // Зупиняємо перетягування
+    }
 }
-void ImageViewer::ViewerWidgetMouseMove(ViewerWidget* w, QEvent* event)
-{
+void ImageViewer::ViewerWidgetMouseMove(ViewerWidget* w, QEvent* event) {
     QMouseEvent* e = static_cast<QMouseEvent*>(event);
 
-    if (!w->getDraggingPolygon()) return;
+    if (w->getDraggingPolygon()) {
+        QPoint currentPos = e->pos();
+        QPoint lastPos = w->getLastMousePos();
 
-    QPoint currentPos = e->pos();
-    QPoint lastPos = w->getLastMousePos();
+        int dx = currentPos.x() - lastPos.x();
+        int dy = currentPos.y() - lastPos.y();
 
-    int dx = currentPos.x() - lastPos.x();
-    int dy = currentPos.y() - lastPos.y();
+        w->movePolygon(dx, dy); // Змінює originalPoints
+        w->setLastMousePos(currentPos);
 
-    w->movePolygon(dx, dy);
-    w->setLastMousePos(currentPos);
-
-    w->redrawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex(),ui->ScanLine->isChecked());
-
+        // Перемальовуємо з автоматичним відсіканням
+        w->redrawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex(), ui->ScanLine->isChecked());
+    }
 }
 
 void ImageViewer::ViewerWidgetLeave(ViewerWidget* w, QEvent* event)
@@ -278,7 +220,6 @@ void ImageViewer::on_actionExit_triggered()
 void ImageViewer::on_Rotation_clicked(){
     double k = ui->spinRotation->value();
     vW->rotation(k);
-    vW->SutHod();
     vW->redrawPolygon(globalColor,ui->comboBoxLineAlg->currentIndex(),ui->ScanLine->isChecked());
 }
 
@@ -286,19 +227,16 @@ void ImageViewer::on_Scale_clicked(){
     double x = ui->spinX->value();
     double y = ui->spinY->value();
     vW->Scale(x, y);
-    vW->SutHod();
     vW->redrawPolygon(globalColor,ui->comboBoxLineAlg->currentIndex(),ui->ScanLine->isChecked());
 }
 void ImageViewer::on_Shear_clicked(){
     double pS = ui->spinShear->value();
     vW->Shear(pS, ui->comboBoxShear->currentIndex());
-    vW->SutHod();
     vW->redrawPolygon(globalColor,ui->comboBoxLineAlg->currentIndex(),ui->ScanLine->isChecked());
 }
 
 void ImageViewer::on_OsSum_clicked(){
     vW->OsSum();
-    vW->SutHod();
     vW->redrawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex(),ui->ScanLine->isChecked());
 
 }

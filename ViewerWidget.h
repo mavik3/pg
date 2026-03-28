@@ -3,6 +3,13 @@
 class ViewerWidget :public QWidget {
 	Q_OBJECT
 private:
+    struct Vertex{
+        QPoint pos;
+        QColor color;
+    };
+
+    Vertex base_t0, base_t1, base_t2;
+
 	QSize areaSize = QSize(0, 0);//velkost
 	QImage* img = nullptr;// QPainter to iste ale ne budem pouzivat * 
 	uchar* data = nullptr;// zapis baytov
@@ -11,6 +18,7 @@ private:
 	QPoint drawLineBegin = QPoint(0, 0);
 
     QVector<QPoint> polygonPoints;
+    QVector<QPoint> originalPoints;
 
     // чи вже є готовий об'єкт
     bool polygonFinished = false;   // чи завершений полігон
@@ -18,6 +26,7 @@ private:
     bool draggingPolygon = false;
     QPoint lastMousePos = QPoint(0, 0);
     bool Scan = false;
+
 
 public:
 	ViewerWidget(QSize imgSize, QWidget* parent = Q_NULLPTR);
@@ -69,21 +78,30 @@ public:
 
     void movePolygon(int dx, int dy);
     void redrawPolygon(const QColor& color, int algType, bool scan);
+    void fillTriangle(Vertex t0, Vertex t1, Vertex t2, int fillType);
     void Scale(double x, double y);
     void Shear(double pS, int algType);
 
     void rotation(double k);
     void OsSum();
 
-    void CyrBec();
-    void SutHod();
+    QVector<QPoint> calculateCyrusBeckLine(QPoint S, QPoint E);
+
+    QVector<QPoint>& getOriginalPoints() { return originalPoints; }
+    // Змінюємо функцію: тепер вона приймає вхідні точки і повертає відсічені
+    QVector<QPoint> calculateClippedPolygon(const QVector<QPoint>& sourcePoints);
 
     void Scan_line(const QColor& color);
 
     void setScan(bool state){Scan = state;}
     bool getScan(){return Scan;}
 
-
+    void setTriangleVertixes(Vertex t0, Vertex t1, Vertex t2) {
+        base_t0 = t0;
+        base_t1 = t1;
+        base_t2 = t2;
+    }
+    void fillButtomTriangle(Vertex t0, Vertex t1, Vertex t2);
 
 public slots:
 	void paintEvent(QPaintEvent* event) Q_DECL_OVERRIDE;

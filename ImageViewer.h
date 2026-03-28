@@ -53,4 +53,5 @@ private slots:
     void on_OsSum_clicked();
 	//Tools slots
 	void on_pushButtonSetColor_clicked();
+
 };
