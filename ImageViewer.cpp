@@ -20,13 +20,15 @@ ImageViewer::ImageViewer(QWidget* parent)
 	ui->scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);//ked zmensi
 	ui->scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     ui->spinShear->setRange(-1,1);
-
 	vW->setObjectName("ViewerWidget"); //aby nazvat objekt
 	vW->installEventFilter(this);
 
 	globalColor = Qt::blue; //farba
 	QString style_sheet = QString("background-color: %1;").arg(globalColor.name(QColor::HexRgb));
-	ui->pushButtonSetColor->setStyleSheet(style_sheet);
+    ui->pushButtonSetColor->setStyleSheet(style_sheet);
+    colorT0 = Qt::red;
+    colorT1 = Qt::green;
+    colorT2 = Qt::blue;
 }
 
 // Event filters
@@ -72,6 +74,20 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 {
     QMouseEvent* e = static_cast<QMouseEvent*>(event);
 
+    /*if (vW->getOriginalPoints().size() == 3) {
+
+        ui->FillType->setEnabled(true);
+        ui->T0Color->setEnabled(true);
+        ui->T1Color->setEnabled(true);
+        ui->T2Color->setEnabled(true);
+    } else {
+        ui->FillType->setCurrentIndex(2); // Скидаємо на суцільний колір
+        ui->FillType->setEnabled(false);        // Вимикаємо можливість вибору
+        ui->T0Color->setEnabled(false);
+        ui->T1Color->setEnabled(false);
+        ui->T2Color->setEnabled(false);
+        // Дозволяємо вибір для трикутника
+    }*/
     if (ui->Polygon->isChecked()) {
         if (e->button() == Qt::LeftButton) {
             if (w->getPolygonFinished()) {
@@ -84,7 +100,7 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
         else if (e->button() == Qt::RightButton) {
             w->setPolygonFinished(true);
         }
-        w->redrawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex(), ui->ScanLine->isChecked());
+        w->redrawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex(), ui->Fill->isChecked());
 
     }
     if (ui->Move->isChecked() && e->button() == Qt::LeftButton) {
@@ -115,7 +131,7 @@ void ImageViewer::ViewerWidgetMouseMove(ViewerWidget* w, QEvent* event) {
         w->setLastMousePos(currentPos);
 
         // Перемальовуємо з автоматичним відсіканням
-        w->redrawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex(), ui->ScanLine->isChecked());
+        w->redrawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex(), ui->Fill->isChecked());
     }
 }
 
@@ -135,7 +151,7 @@ void ImageViewer::ViewerWidgetWheel(ViewerWidget* w, QEvent* event)
 
         QVector<QPoint> p = w->getPolygonPoints();
         vW->Scale(factor,factor);
-        vW->redrawPolygon(globalColor,ui->comboBoxLineAlg->currentIndex(),ui->ScanLine->isChecked());
+        vW->redrawPolygon(globalColor,ui->comboBoxLineAlg->currentIndex(),ui->Fill->isChecked());
     }
 }
 
@@ -220,25 +236,101 @@ void ImageViewer::on_actionExit_triggered()
 void ImageViewer::on_Rotation_clicked(){
     double k = ui->spinRotation->value();
     vW->rotation(k);
-    vW->redrawPolygon(globalColor,ui->comboBoxLineAlg->currentIndex(),ui->ScanLine->isChecked());
+    vW->redrawPolygon(globalColor,ui->comboBoxLineAlg->currentIndex(),ui->Fill->isChecked());
 }
 
 void ImageViewer::on_Scale_clicked(){
     double x = ui->spinX->value();
     double y = ui->spinY->value();
     vW->Scale(x, y);
-    vW->redrawPolygon(globalColor,ui->comboBoxLineAlg->currentIndex(),ui->ScanLine->isChecked());
+    vW->redrawPolygon(globalColor,ui->comboBoxLineAlg->currentIndex(),ui->Fill->isChecked());
+    int xy;
 }
 void ImageViewer::on_Shear_clicked(){
     double pS = ui->spinShear->value();
     vW->Shear(pS, ui->comboBoxShear->currentIndex());
-    vW->redrawPolygon(globalColor,ui->comboBoxLineAlg->currentIndex(),ui->ScanLine->isChecked());
+    vW->redrawPolygon(globalColor,ui->comboBoxLineAlg->currentIndex(),ui->Fill->isChecked());
 }
 
 void ImageViewer::on_OsSum_clicked(){
     vW->OsSum();
-    vW->redrawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex(),ui->ScanLine->isChecked());
+    vW->redrawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex(),ui->Fill->isChecked());
 
+}
+void ImageViewer::on_Fill_clicked() {
+    QVector<QPoint> pts = vW->getOriginalPoints();
+
+    bool isChecked = ui->Fill->isChecked();
+    int fillType = ui->FillType->currentIndex();
+
+    if (pts.size() == 3) {
+
+        Vertex t0 = { pts[0], colorT0 };
+        Vertex t1 = { pts[1], colorT1 };
+        Vertex t2 = { pts[2], colorT2 };
+        vW->setTriangleVertixes(t0, t1, t2);
+    }
+    vW->setFillEnabled(ui->Fill->isChecked());
+    vW->setFillType(ui->FillType->currentIndex());
+
+    vW->redrawPolygon(globalColor,ui->comboBoxLineAlg->currentIndex(),ui->Fill->isChecked());
+}
+void ImageViewer::on_T0Color_clicked()
+{
+    QColor newColor = QColorDialog::getColor(colorT0, this);
+
+    if (newColor.isValid()) {
+        colorT0 = newColor;
+
+        QString style = QString("background-color: %1;")
+                            .arg(colorT0.name(QColor::HexRgb));
+        ui->T0Color->setStyleSheet(style);
+        QVector<QPoint> pts = vW->getOriginalPoints();
+        if (pts.size() == 3) {
+            vW->setTriangleVertixes({pts[0], colorT0}, {pts[1], colorT1}, {pts[2], colorT2});
+        }
+        // Перемальовуємо
+        vW->redrawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex(), ui->Fill->isChecked());
+    }
+}
+
+void ImageViewer::on_T1Color_clicked()
+{
+    QColor newColor = QColorDialog::getColor(colorT1, this);
+
+    if (newColor.isValid()) {
+        colorT1 = newColor;
+
+        QString style = QString("background-color: %1;")
+                            .arg(colorT1.name(QColor::HexRgb));
+        ui->T1Color->setStyleSheet(style);
+        QVector<QPoint> pts = vW->getOriginalPoints();
+        if (pts.size() == 3) {
+            vW->setTriangleVertixes({pts[0], colorT0}, {pts[1], colorT1}, {pts[2], colorT2});
+        }
+        // Перемальовуємо
+        vW->redrawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex(), ui->Fill->isChecked());
+    }
+
+}
+
+void ImageViewer::on_T2Color_clicked()
+{
+    QColor newColor = QColorDialog::getColor(colorT2, this);
+
+    if (newColor.isValid()) {
+        colorT2 = newColor;
+
+        QString style = QString("background-color: %1;")
+                            .arg(colorT2.name(QColor::HexRgb));
+        ui->T2Color->setStyleSheet(style);
+        QVector<QPoint> pts = vW->getOriginalPoints();
+        if (pts.size() == 3) {
+            vW->setTriangleVertixes({pts[0], colorT0}, {pts[1], colorT1}, {pts[2], colorT2});
+        }
+        // Перемальовуємо
+        vW->redrawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex(), ui->Fill->isChecked());
+    }
 }
 
 void ImageViewer::on_pushButtonSetColor_clicked()
@@ -250,3 +342,11 @@ void ImageViewer::on_pushButtonSetColor_clicked()
 		globalColor = newColor;//zmeni global farba
 	}
 }
+
+void ImageViewer::on_FillType_currentIndexChanged(int index)
+{
+    vW->setFillType(index); // Оновлюємо індекс у віджеті
+    // Перемальовуємо
+    vW->redrawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex(), ui->Fill->isChecked());
+}
+

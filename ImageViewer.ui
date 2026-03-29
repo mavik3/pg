@@ -25,7 +25,7 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>566</width>
+         <width>516</width>
          <height>565</height>
         </rect>
        </property>
@@ -217,11 +217,98 @@
       </widget>
      </item>
      <item>
-      <widget class="QRadioButton" name="ScanLine">
-       <property name="text">
-        <string>ScanLine</string>
-       </property>
-      </widget>
+      <layout class="QHBoxLayout" name="horizontalLayout_5">
+       <item>
+        <widget class="QPushButton" name="T0Color">
+         <property name="text">
+          <string>T0</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="T1Color">
+         <property name="text">
+          <string>T1</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="T2Color">
+         <property name="text">
+          <string>T2</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_6">
+       <item>
+        <widget class="QComboBox" name="FillType">
+         <item>
+          <property name="text">
+           <string>Nearest Neighbor</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Barycentricka interpolacia</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Vyplnenie</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="Fill">
+         <property name="text">
+          <string>Fill</string>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_7">
+       <item>
+        <widget class="QComboBox" name="comboBox">
+         <item>
+          <property name="text">
+           <string>Hermitovske</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Bezirove</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Casteljauov algoritmus</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="pushButton">
+         <property name="text">
+          <string>Curve</string>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QSpinBox" name="spinBox"/>
+       </item>
+      </layout>
      </item>
      <item>
       <spacer name="verticalSpacer">

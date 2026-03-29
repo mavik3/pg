@@ -1,4 +1,4 @@
- #include   "ViewerWidget.h"
+#include   "ViewerWidget.h"
 #include <cmath>
 #include <QtMath>
 #include <algorithm>
@@ -313,13 +313,13 @@ void ViewerWidget::drawCirclePoints(int xc, int yc, int x, int y, QColor color)
 void ViewerWidget::drawPolygon(const QVector<QPoint>& pts, QColor color, int algType, bool closed) {
     if (pts.size() < 2) return;
 
-    for (int i = 0; i < pts.size() - 1; ++i) {
+    for (int i = 0; i < pts.size() - 1; i++) {
         drawLine(pts[i], pts[i+1], color, algType);
     }
 
     if (closed && pts.size() >= 3) {
         drawLine(pts.last(), pts.first(), color, algType); // Замикаємо полігон правильно
-    }
+        }
 }
 
 void ViewerWidget::redrawPolygon(const QColor& color, int algType, bool scan)
@@ -329,7 +329,7 @@ void ViewerWidget::redrawPolygon(const QColor& color, int algType, bool scan)
 
     // ВИПАДОК 1: Малюємо окремі лінії (поки полігон не завершено ПКМ)
     if (!polygonFinished) {
-        if (originalPoints.size() >= 2) {
+        if (originalPoints.size() > 1) {
             // Використовуємо Сайрус-Бек для кожного відрізка в ланцюжку
             for (int i = 0; i < originalPoints.size() - 1; i++) {
                 QVector<QPoint> clipped = calculateCyrusBeckLine(originalPoints[i], originalPoints[i+1]);
@@ -342,21 +342,43 @@ void ViewerWidget::redrawPolygon(const QColor& color, int algType, bool scan)
     // ВИПАДОК 2: Малюємо готовий полігон (після натискання ПКМ)
     else {
         // Використовуємо Сазерленд-Ходжман (він повертає замкнений вектор)
-        QVector<QPoint> clippedPoly = calculateClippedPolygon(originalPoints);
+        QVector<QPoint> clipped = calculateClippedPolygon(originalPoints);
 
-        if (!clippedPoly.isEmpty()) {
-            drawPolygon(clippedPoly, color, algType, true); // true = замикати
+        if (clipped.isEmpty()) return;
 
-            // Якщо увімкнено заповнення
-            if (scan && clippedPoly.size() >= 3) {
-                QVector<QPoint> backup = polygonPoints;
-                polygonPoints = clippedPoly;
+        if (fillEnabled && originalPoints.size() == 3){
+              /*  QVector<QPoint> backup = polygonPoints;
+                polygonPoints = clipped;
                 Scan_line(color);
                 polygonPoints = backup;
             }
-        }
+            else if (originalPoints.size() == 3 && clipped.size() == 3) {
+                    // Викликаємо твій спеціальний метод для трикутника
+                    // ТУТ ми передаємо currentFillType, який прийшов з UI
+                    Vertex v0 = { clipped[0], base_t0.color };
+                    Vertex v1 = { clipped[1], base_t1.color };
+                    Vertex v2 = { clipped[2], base_t2.color };
+                    fillTriangle(base_t0, base_t1, base_t2, currentFillType);
+                }
+            }*/
+            base_t0.pos = originalPoints[0];
+            base_t1.pos = originalPoints[1];
+            base_t2.pos = originalPoints[2];
+                    this->polygonPoints = clipped; // Даємо Scan-line обрізані межі
+                    Scan_line(color);             // Запускаємо заповнення
+                } else if (fillEnabled) {
+            this->polygonPoints = clipped;
+            Scan_line(color);
+
+                }
+
+    for (int i = 0; i < clipped.size(); i++) {
+        drawLine(clipped[i], clipped[(i + 1) % clipped.size()], color, algType);
+
     }
+}
     update();
+
 }
 
 
@@ -453,103 +475,114 @@ void ViewerWidget::OsSum(){
 }
 
 
-QVector<QPoint> ViewerWidget::calculateCyrusBeckLine(QPoint S, QPoint E)
+QVector<QPoint> ViewerWidget::calculateCyrusBeckLine(QPoint P1, QPoint P2)
 {
-    QVector<QPoint> viewerWidgetEdges;
-    viewerWidgetEdges.push_back(QPoint(0, 0));
-    viewerWidgetEdges.push_back(QPoint(0, img->height()));
-    viewerWidgetEdges.push_back(QPoint(img->width(), img->height()));
-    viewerWidgetEdges.push_back(QPoint(img->width(), 0));
-
     double tL = 0.0;
     double tU = 1.0;
-    QPoint d(polygonPoints[1].x() -polygonPoints[0].x(), polygonPoints[1].y() - polygonPoints[0].y());
+    QVector2D d(P2 - P1);
 
-    qsizetype i = 0;
-    while (i < viewerWidgetEdges.size())
-    {
-        QPoint normal;
-        if(i == viewerWidgetEdges.size() - 1) // upper edge
-        {
-            normal.setX(viewerWidgetEdges.back().y() - viewerWidgetEdges.front().y());
-            normal.setY(-(viewerWidgetEdges.back().x() - viewerWidgetEdges.front().x()));
-        }
-        else // other edges
-        {
-            normal.setX(viewerWidgetEdges[i + 1].y() - viewerWidgetEdges[i].y());
-            normal.setY(-(viewerWidgetEdges[i + 1].x() - viewerWidgetEdges[i].x()));
-        }
-        QPoint w(polygonPoints[0].x() - viewerWidgetEdges[i].x(), polygonPoints[0].y() - viewerWidgetEdges[i].y());
+    int xmax = img->width() - 1;
+    int ymax = img->height() - 1;
 
-        int dn = d.x() * normal.x() + d.y() * normal.y();
-        int wn = w.x() * normal.x() + w.y() * normal.y();
+    // Нормалі та точки на межах екрана (внутрішні нормалі)
+    struct Boundary { QPoint Ei; QVector2D ni; };
+    QVector<Boundary> boundaries = {
+        {QPoint(0, 0),    QVector2D(1, 0)},  // Ліва
+        {QPoint(xmax, 0), QVector2D(-1, 0)}, // Права
+        {QPoint(0, 0),    QVector2D(0, 1)},  // Верхня
+        {QPoint(0, ymax), QVector2D(0, -1)}  // Нижня
+    };
 
-        double t = -wn / (double)dn;
+    for (const auto& edge : boundaries) {
+        QVector2D w(P1 - edge.Ei);
 
-        if (dn != 0)
-        {
-            if (dn > 0 && t <= 1)
-                tL = qMax(t, tL);
-            else if (dn < 0 && t >= 0)
-                tU = qMax(t, tU);
-        }
-        i++;
+        double dn = QVector2D::dotProduct(d, edge.ni);
+        double wn = QVector2D::dotProduct(w, edge.ni);
+
+        if (dn != 0) {
+            double t = -wn / dn;
+            if (dn > 0) tL = std::max(t, tL);
+
+            else tU = std::min(tU, t);
+        } else if (wn < 0) return {}; // Паралельно і зовні
     }
 
-    if (tL == 0.0 && tU == 1.0)
-    {
-        if (!(polygonPoints[0].x() <= img->width() && polygonPoints[0].x() >= 0 && polygonPoints[0].y() <= img->height() && polygonPoints[0].y() >= 0))
-            return polygonPoints;
+    if (tL <= tU) {
+        return { QPoint(qRound(P1.x() + tL * d.x()), qRound(P1.y() + tL * d.y())),
+                QPoint(qRound(P1.x() + tU * d.x()), qRound(P1.y() + tU * d.y())) };
     }
-    else if (tL > 0 && tL < 1 && tU > 0 && tU < 1)
-    {
-        QVector<QPoint> clippedPoints;
-        clippedPoints.push_back(QPoint(polygonPoints[0].x() + ( polygonPoints[1].x() - polygonPoints[0].x() ) * tL + 0.5, polygonPoints[0].y() + (polygonPoints[1].y() - polygonPoints[0].y()) * tL + 0.5));
-        clippedPoints.push_back(QPoint(polygonPoints[0].x() + (polygonPoints[1].x() - polygonPoints[0].x()) * tU + 0.5, polygonPoints[0].y() + (polygonPoints[1].y() - polygonPoints[0].y()) * tU + 0.5));
-        return clippedPoints;
-    }
-
-    return polygonPoints;
+    return {};
 }
 // Функція тепер повертає результат, а не змінює вхідні дані
 QVector<QPoint> ViewerWidget::calculateClippedPolygon(const QVector<QPoint>& sourcePoints) {
     if (sourcePoints.size() < 3) return sourcePoints;
 
-    QVector<QPoint> V = sourcePoints;
-    QVector<QPoint> W;
+    QVector<QPoint> V = sourcePoints; // vytvorme pole vrcholov V
     int xmax = img->width() - 1;
     int ymax = img->height() - 1;
 
+    // Робимо це для всіх 4-х меж (ліва, права, верхня, нижня)
     for (int border = 0; border < 4; border++) {
         if (V.isEmpty()) return {};
-        W.clear();
-        QPoint S = V.last();
-        for (int i = 0; i < V.size(); i++) {
-            QPoint P = V[i];
-            bool Sin, Pin;
-            if (border == 0) { Sin = (S.x() >= 0); Pin = (P.x() >= 0); }
-            else if (border == 1) { Sin = (S.x() <= xmax); Pin = (P.x() <= xmax); }
-            else if (border == 2) { Sin = (S.y() >= 0); Pin = (P.y() >= 0); }
-            else { Sin = (S.y() <= ymax); Pin = (P.y() <= ymax); }
 
-            if (Pin) {
-                if (!Sin) { // Outside -> Inside
-                    double t;
-                    if (border < 2) t = (double)((border==0?0:xmax) - S.x()) / (P.x() - S.x());
-                    else t = (double)((border==2?0:ymax) - S.y()) / (P.y() - S.y());
-                    W.append(QPoint(qRound(S.x() + t*(P.x()-S.x())), qRound(S.y() + t*(P.y()-S.y()))));
+        QVector<QPoint> W;     // vytvor prázdne pole W
+        QPoint S = V.last();   // do bodu S uložíme posledný vrchol Vn-1
+
+        // opakuj pre 0 <= i < n:
+        for (int i = 0; i < V.size(); i++) {
+            QPoint P = V[i];   // Це наш Vi з конспекту
+
+            // Визначаємо, чи знаходяться точки всередині поточної межі
+            bool Sin, Pin;
+            if (border == 0)      { Sin = (S.x() >= 0);    Pin = (P.x() >= 0); }    // Ліва
+            else if (border == 1) { Sin = (S.x() <= xmax); Pin = (P.x() <= xmax); } // Права
+            else if (border == 2) { Sin = (S.y() >= 0);    Pin = (P.y() >= 0); }    // Верхня
+            else                  { Sin = (S.y() <= ymax); Pin = (P.y() <= ymax); } // Нижня
+
+            // ТУТ ПОЧИНАЄТЬСЯ ЛОГІКА З ТВОГО КОНСПЕКТУ:
+
+            if (Pin) { // ak Vi,x >= xmin (Поточна точка P ВСЕРЕДИНІ)
+
+                if (Sin) {
+                    // ak Sx >= xmin (Попередня точка S теж ВСЕРЕДИНІ)
+                    // Випадок: ВНУТРІ -> ВНУТРІ
+                    W.append(P); // tak pridaj Vi do W
                 }
-                W.append(P);
-            } else if (Sin) { // Inside -> Outside
-                double t;
-                if (border < 2) t = (double)((border==0?0:xmax) - S.x()) / (P.x() - S.x());
-                else t = (double)((border==2?0:ymax) - S.y()) / (P.y() - S.y());
-                W.append(QPoint(qRound(S.x() + t*(P.x()-S.x())), qRound(S.y() + t*(P.y()-S.y()))));
+                else {
+                    // inak (Попередня точка S ЗОВНІ)
+                    // Випадок: ЗОВНІ -> ВНУТРІ
+
+                    // vypočítaj priesečník Pi
+                    double t = (border < 2) ? (double)((border==0?0:xmax) - S.x()) / (P.x() - S.x())
+                                            : (double)((border==2?0:ymax) - S.y()) / (P.y() - S.y());
+                    QPoint priesecnik(qRound(S.x() + t*(P.x()-S.x())), qRound(S.y() + t*(P.y()-S.y())));
+
+                    W.append(priesecnik); // pridaj ho (Pi) do W
+                    W.append(P);          // a následne pridaj do W aj bod Vi
+                }
             }
-            S = P;
+            else { // inak (Поточна точка P ЗОВНІ)
+
+                if (Sin) {
+                    // ak Sx >= xmin (Попередня точка S ВСЕРЕДИНІ)
+                    // Випадок: ВНУТРІ -> ЗОВНІ
+
+                    // vypočítaj priesečník Pi
+                    double t = (border < 2) ? (double)((border==0?0:xmax) - S.x()) / (P.x() - S.x())
+                                            : (double)((border==2?0:ymax) - S.y()) / (P.y() - S.y());
+                    QPoint priesecnik(qRound(S.x() + t*(P.x()-S.x())), qRound(S.y() + t*(P.y()-S.y())));
+
+                    W.append(priesecnik); // pridaj ho (Pi) do W
+                }
+                // inak: (Обидві точки зовні. Випадок: ЗОВНІ -> ЗОВНІ).
+                // Не робимо нічого (žiadna akcia).
+            }
+
+            S = P; // aktualizuj bod S = Vi
         }
-        V = W;
+        V = W; // Результат обрізки однією межею стає вхідними даними для наступної
     }
+
     return V;
 }
 void ViewerWidget::Scan_line(const QColor& color)
@@ -610,13 +643,190 @@ void ViewerWidget::Scan_line(const QColor& color)
             xEnd   = std::min(img->width() - 1, xEnd);
 
             for (int x = xStart; x <= xEnd; x++) {
-                setPixel(x, y, color);
+                if (originalPoints.size() == 3) {
+                    // Ми використовуємо твою функцію getColor, яка вміє
+                    // рахувати барицентричні координати (градієнт)
+                    QColor c = getColor(x, y, currentFillType);
+                    setPixel(x, y, c);
+                } else {
+                    setPixel(x, y, color); // Якщо це звичайний багатокутник
+                }
             }
         }
     }
 }
-//void ViewerWidget::Triangle(const QVector<QPoint>& T){
+void ViewerWidget::fillTriangle(Vertex t0, Vertex t1, Vertex t2, int fillType) {
+    base_t0 = t0;
+    base_t1 = t1;
+    base_t2 = t2;
 
+    std::vector<Vertex> points = { t0, t1, t2 };
+
+    std::sort(points.begin(), points.end(), [](const Vertex& a, const Vertex& b) {
+        if (a.pos.y() != b.pos.y()) { //ak y sa nerovnaju - teda mozme ich porovnavat <>
+            return a.pos.y() < b.pos.y(); //tak primarne usporiadame podla y
+        }
+        else { //ak nemozme  rozhodnut, ako usporiadat podla y, pretoze sa rovnaju
+            return a.pos.x() < b.pos.x(); //sekindarne podla x
+        }
+    });
+
+    t0 = points[0];
+    t1 = points[1];
+    t2 = points[2];
+
+    if (t0.pos.y() == t1.pos.y()) {
+        //pripad: vodorovna horna hrana
+        fillBottomTriangle(t0, t1, t2, fillType);
+    }
+    else if (t1.pos.y() == t2.pos.y()) {
+        //pripad: vodorovna spodna hrana
+        fillTopTriangle(t0, t1, t2, fillType);
+    }
+    else {
+        QPoint pos_p;
+        pos_p = QPoint((t0.pos.x()+(t1.pos.y()- t0.pos.y())*((double)(t2.pos.x()- t0.pos.x())/(t2.pos.y() - t0.pos.y()))), t1.pos.y());
+        Vertex p = {pos_p, t1.color};
+
+        if (t1.pos.x() < p.pos.x()) {
+            fillTopTriangle(t0, t1, p, fillType);
+            fillBottomTriangle(t1, p, t2, fillType);
+        }
+        else {
+            fillTopTriangle(t0, p, t1, fillType);
+            fillBottomTriangle(p, t1, t2, fillType);
+        }
+    }
+}
+
+void ViewerWidget::fillTrianglePart(int y1, int y2, double x1, double x2, double w1, double w2, int fillType)
+{
+    for (int y = y1; y <= y2; y++) {
+
+        int startX = (int)std::ceil(std::min(x1, x2));
+        int endX = (int)std::floor(std::max(x1, x2));
+
+        for (int x = startX; x <= endX; x++) {
+            setPixel(x, y, getColor(x, y, fillType));
+        }
+
+        x1 += w1;
+        x2 += w2;
+    }
+}
+
+
+void ViewerWidget::fillBottomTriangle(Vertex t0, Vertex t1, Vertex t2, int fillType)
+{
+    double w1 = (double)(t2.pos.x() - t0.pos.x()) / (t2.pos.y() - t0.pos.y());
+    double w2 = (double)(t2.pos.x() - t1.pos.x()) / (t2.pos.y() - t1.pos.y());
+
+    double x1 = t0.pos.x();
+    double x2 = t1.pos.x();
+
+    int y1 = t0.pos.y();
+    int y2 = t2.pos.y();
+
+    fillTrianglePart(y1, y2, x1, x2, w1, w2, fillType);
+}
+
+void ViewerWidget::fillTopTriangle(Vertex t0, Vertex t1, Vertex t2, int fillType)
+{
+    //hrany idu zhora nadol: e1 spaja t0-t1, e2 spaja t0-t2
+    double w1 = (double)(t1.pos.x() - t0.pos.x()) / (t1.pos.y() - t0.pos.y());
+    double w2 = (double)(t2.pos.x() - t0.pos.x()) / (t2.pos.y() - t0.pos.y());
+
+    //zaciname na vrchole t0
+    double x1 = t0.pos.x();
+    double x2 = t0.pos.x();
+
+    int y1 = t0.pos.y();
+    int y2 = t1.pos.y();
+
+    fillTrianglePart(y1, y2, x1, x2, w1, w2, fillType);
+}
+
+QColor ViewerWidget::getNearestColor(int x, int y, Vertex t0, Vertex t1, Vertex t2)
+{
+    // vzdialenosti od pixelu k jednotlivym vrcholom
+    int d0 = (x - t0.pos.x()) * (x - t0.pos.x()) +
+             (y - t0.pos.y()) * (y - t0.pos.y());
+
+    int d1 = (x - t1.pos.x()) * (x - t1.pos.x()) +
+             (y - t1.pos.y()) * (y - t1.pos.y());
+
+    int d2 = (x - t2.pos.x()) * (x - t2.pos.x()) +
+             (y - t2.pos.y()) * (y - t2.pos.y());
+
+    // vyberieme farbu najblizsieho vrcholu
+    if (d0 <= d1 && d0 <= d2) {
+        return t0.color;
+    }
+    else if (d1 <= d0 && d1 <= d2) {
+        return t1.color;
+    }
+    else {
+        return t2.color;
+    }
+}
+
+QColor ViewerWidget::getBarycentricColor(int x, int y, Vertex t0, Vertex t1, Vertex t2)
+{
+    // celkova plocha trojuholnika T0,T1,T2
+    double A = abs((t1.pos.x() - t0.pos.x()) * (t2.pos.y() - t0.pos.y()) -
+                   (t1.pos.y() - t0.pos.y()) * (t2.pos.x() - t0.pos.x())) / 2;
+
+    // plochy podtrojuholnikov s bodom P(x,y)
+    double A0 = abs((t1.pos.x() - x) * (t2.pos.y() - y) -
+                    (t1.pos.y() - y) * (t2.pos.x() - x)) / 2;
+
+    double A1 = abs((t0.pos.x() - x) * (t2.pos.y() - y) -
+                    (t0.pos.y() - y) * (t2.pos.x() - x)) / 2;
+
+    double A2 = A - A0 - A1; // tretia plocha (aby sme nemuseli pocitat znova)
+
+    // vahy (barycentricke suradnice)
+    double l0 = A0 / A;
+    double l1 = A1 / A;
+    double l2 = A2 / A;
+
+    // interpolacia farby
+    int r = (int)(l0 * t0.color.red() + l1 * t1.color.red() + l2 * t2.color.red());
+    int g = (int)(l0 * t0.color.green() + l1 * t1.color.green() + l2 * t2.color.green());
+    int b = (int)(l0 * t0.color.blue() + l1 * t1.color.blue() + l2 * t2.color.blue());
+
+    // orezanie na rozsah 0255
+    r = qBound(0, r, 255);
+    g = qBound(0, g, 255);
+    b = qBound(0, b, 255);
+
+    return QColor(r, g, b);
+}
+
+QColor ViewerWidget::getColor(int x, int y, int fillType) {
+    QColor color;
+    if (fillType == 0) {
+        color = getNearestColor(x, y, base_t0, base_t1, base_t2);
+    }
+    else if (fillType == 1) {
+        color = getBarycentricColor(x, y, base_t0, base_t1, base_t2);
+    }
+    else {
+        color = base_t0.color;
+    }
+    int xy;
+    return color;
+
+}
+
+void ViewerWidget::updateTriangleLogic(){
+    if (originalPoints.size() == 3) {
+        // Оновлюємо тільки позиції, зберігаючи кольори
+        base_t0.pos = originalPoints[0];
+        base_t1.pos = originalPoints[1];
+        base_t2.pos = originalPoints[2];
+    }
+}
 
 
 

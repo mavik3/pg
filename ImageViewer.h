@@ -21,6 +21,9 @@ private:
 	QColor globalColor;
 	QSettings settings;
 	QMessageBox msgBox;
+    QColor colorT0;
+    QColor colorT1;
+    QColor colorT2;
 
 	//Event filters
 	bool eventFilter(QObject* obj, QEvent* event);
@@ -51,7 +54,13 @@ private slots:
     void on_Scale_clicked();
     void on_Shear_clicked();
     void on_OsSum_clicked();
+    void on_Fill_clicked();
+
+    void on_T0Color_clicked();
+    void on_T1Color_clicked();
+    void on_T2Color_clicked();
 	//Tools slots
 	void on_pushButtonSetColor_clicked();
 
+    void on_FillType_currentIndexChanged(int index);
 };
