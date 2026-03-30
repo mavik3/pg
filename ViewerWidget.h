@@ -32,6 +32,8 @@ private:
     bool fillEnabled = false;
     int currentFillType = 0;
 
+    bool CircleF = false;
+
 
 public:
 	ViewerWidget(QSize imgSize, QWidget* parent = Q_NULLPTR);
@@ -74,6 +76,8 @@ public:
     bool getPolygonFinished() { return polygonFinished; }
     void setPolygonFinished(bool s) { polygonFinished = s; }
 
+    bool getCircleF(){return CircleF;}
+    void setCircleF(bool circle){CircleF = circle;}
 
     bool getDraggingPolygon() const { return draggingPolygon; }
     void setDraggingPolygon(bool state) { draggingPolygon = state; }
@@ -82,8 +86,7 @@ public:
     void setLastMousePos(QPoint p) { lastMousePos = p; }
 
     void movePolygon(int dx, int dy);
-    void redrawPolygon(const QColor& color, int algType, bool scan);
-    void fillTriangle(Vertex t0, Vertex t1, Vertex t2, int fillType);
+    void redrawPolygon(const QColor& color, int algType);
     void Scale(double x, double y);
     void Shear(double pS, int algType);
 
@@ -98,19 +101,16 @@ public:
 
     void Scan_line(const QColor& color);
 
-    void setScan(bool state){fillEnabled = state;}
-    bool getScan(){return fillEnabled;}
-
     void setTriangleVertixes(Vertex t0, Vertex t1, Vertex t2) {
         base_t0 = t0;
         base_t1 = t1;
         base_t2 = t2;
     }
-
+    bool getFillEnabled(){return fillEnabled;}
     void setFillEnabled(bool enabled) { fillEnabled = enabled; }
     void setFillType(int type) { currentFillType = type; }
 
-
+    void fillTriangle(Vertex t0, Vertex t1, Vertex t2, int fillType);
     void fillButtomTriangle(Vertex t0, Vertex t1, Vertex t2);
     void fillTrianglePart(int y1, int y2, double x1, double x2, double w1, double w2, int fillType);
     void fillBottomTriangle(Vertex t0, Vertex t1, Vertex t2, int fillType);

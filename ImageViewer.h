@@ -25,6 +25,9 @@ private:
     QColor colorT1;
     QColor colorT2;
 
+    bool circleInProgress = false;
+
+
 	//Event filters
 	bool eventFilter(QObject* obj, QEvent* event);
 
@@ -59,8 +62,8 @@ private slots:
     void on_T0Color_clicked();
     void on_T1Color_clicked();
     void on_T2Color_clicked();
-	//Tools slots
-	void on_pushButtonSetColor_clicked();
+    //Tools
 
+    void on_pushButtonSetColor_clicked();
     void on_FillType_currentIndexChanged(int index);
 };
