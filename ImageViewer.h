@@ -71,4 +71,5 @@ private slots:
     void on_FillType_currentIndexChanged(int index);
 
     void on_pbCube_clicked();
+    void on_pbSphere_clicked();
 };

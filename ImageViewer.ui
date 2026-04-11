@@ -323,7 +323,7 @@
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout_8">
        <item>
-        <widget class="QDoubleSpinBox" name="spinCube"/>
+        <widget class="QDoubleSpinBox" name="spinSize"/>
        </item>
        <item>
         <widget class="QPushButton" name="pbCube">
@@ -331,6 +331,16 @@
           <string>Cube</string>
          </property>
         </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="pbSphere">
+         <property name="text">
+          <string>Sphere</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QSpinBox" name="spinStacks"/>
        </item>
       </layout>
      </item>

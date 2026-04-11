@@ -2,6 +2,7 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <cmath>
 void Mesh::createCube(double a){
     Tpoints.clear();
     Obj.clear();
@@ -12,6 +13,9 @@ void Mesh::createCube(double a){
             }
         }
     }
+    //musim potom este raz preist tuto cast a
+    //optimalizovat ju (myslim ze to mozne spravit)
+
     addObject(0,1,3);
     addObject(0,2,3);
 
@@ -31,6 +35,90 @@ void Mesh::createCube(double a){
     addObject(7,6,4);
 
 }
+
+void Mesh::createSphere(double r, int stacks){
+
+    int sectors = 30;
+    Tpoints.clear();
+    Obj.clear();
+
+    double deltaPhi = M_PI / stacks;        // крок по вертикалі
+    double deltaTheta = 2.0 * M_PI / sectors;
+
+    for (int i = 0; i <= stacks; i++){
+        double Phi = i * deltaPhi;
+        for (int j = 0; j <= sectors; j++){
+            double Theta = j * deltaTheta;
+            Tpoints.push_back({(double)(r * sin(Phi) * cos(Theta)),
+                               (double)(r * cos(Phi)),
+                               (double)(r * sin(Phi) * sin(Theta))});
+        }
+    }
+    for (int i = 0; i < stacks; i++) { // цикл по поверхах
+        for (int j = 0; j < sectors; j++) { // цикл по меридіанах
+
+            // k1 - це ліва верхня точка нашого "квадратика"
+            int k1 = i * (sectors + 1) + j;
+
+            // k2 - це точка прямо під нею (на наступному поверсі)
+            int k2 = k1 + (sectors + 1);
+
+            // Тепер у нас є 4 точки секції:
+            // k1 --- k1+1
+            // |       |
+            // k2 --- k2+1
+
+            // Додаємо два трикутники (розбиваємо квадрат діагоналлю)
+            addObject(k1, k1 + 1, k2);     // Перший трикутник
+            addObject(k1 + 1, k2 + 1, k2); // Другий трикутник
+        }
+    }
+}
+
+
+bool Mesh::loadFromVTK(QString filename){
+    string path = filename.toStdString();
+    ifstream file(path);
+    if (!file.is_open())
+        return false;
+    string line;
+    while (getline(file,line)){
+        stringstream ss(line);
+        string point;
+        ss >> point;
+        if(point == "POINTS"){
+            int count;
+            string dataType;
+            ss >> count >> dataType;
+            Tpoints.resize(count);
+            for (int i = 0; i < count; i++){
+                file >> Tpoints[i].x >> Tpoints[i].y >> Tpoints[i].z;
+            }
+        }
+        else if (point == "POLYGONS"){
+            Obj.clear();
+            int objectNum, totalNum;
+            ss >> objectNum >> totalNum;
+            for (int i = 0; i < objectNum; i++){
+                int n;
+                file >> n;
+                if (n == 3){
+                    int v1, v2, v3;
+                    file >> v1 >> v2 >> v3;
+                    addObject(v1, v2, v3);
+                }
+                else {
+                    int dummy;
+                    for(int j=0; j<n; j++) file >> dummy;//безпечне викидання непотрібних чисел
+                }
+            }
+        }
+    }
+    file.close();
+    return !Obj.empty();
+}
+
+
 bool Mesh::saveToVTK(QString filename){
     string path = filename.toStdString();
     ofstream file(path);
@@ -47,7 +135,7 @@ bool Mesh::saveToVTK(QString filename){
     }
 
     file << "POLYGONS " << Obj.size() << " " << Obj.size() * 4 << endl;
-    for (const Triangle& T : getObj()){
+    for (const Triangle& T : Obj){
         file << "3 "
              << T.v1 << " "
              << T.v2 << " "

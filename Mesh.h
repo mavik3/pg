@@ -2,6 +2,7 @@
 #include <QVector>
 #include <QString>
 
+
 using namespace std;
 struct Vertex3D {
     double x, y, z;
@@ -30,6 +31,7 @@ public:
     void setTpoints(const QVector<Vertex3D> Tp) {Tpoints = Tp;}
 
     void createCube(double a);
+    void createSphere(double r, int floor);
 
     bool loadFromVTK(QString filename);
     bool saveToVTK(QString filename);

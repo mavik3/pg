@@ -1,5 +1,5 @@
  #include "ImageViewer.h"
-
+#include <iostream>
 //QObject
 //QEvent nase situaci
 //pos()- position mouse
@@ -364,6 +364,17 @@ void ImageViewer::on_actionSave_3D_triggered()
 }
 
 void ImageViewer::on_pbCube_clicked(){
-    double a = ui->spinCube->value();
+    double a = ui->spinSize->value();
     Object.createCube(a);
+    std::cout << a;
+}
+void ImageViewer::on_pbSphere_clicked(){
+    double r = ui->spinSize->value();
+    int n = ui->spinStacks->value();
+    Object.createSphere(r, n);
+    std::cout << n << r;
+    qDebug() << "--- SPHERE GENERATION DEBUG ---";
+    qDebug() << "Radius:" << r << "Stacks:" << n;
+    qDebug() << "Tpoints count:" << Object.getTPoints().size();
+    qDebug() << "Triangles count:" << Object.getObj().size();
 }
