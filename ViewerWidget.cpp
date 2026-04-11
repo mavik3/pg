@@ -517,13 +517,10 @@ QVector<QPoint> ViewerWidget::calculateClippedPolygon(const QVector<QPoint>& sou
             if (P2in) { // ak Vi,x >= xmin (Поточна точка P ВСЕРЕДИНІ)
 
                 if (P1in) {
-                    // ak Sx >= xmin (Попередня точка S теж ВСЕРЕДИНІ)
-                    // Випадок: ВНУТРІ -> ВНУТРІ
+
                     W.append(P2); // tak pridaj Vi do W
                 }
                 else {
-                    // inak (Попередня точка S ЗОВНІ)
-                    // Випадок: ЗОВНІ -> ВНУТРІ
 
                     // vypočítaj priesečník Pi
                     double t = (border < 2) ? (double)((border==0?0:xmax) - P1.x()) / (P2.x() - P1.x())
@@ -537,8 +534,6 @@ QVector<QPoint> ViewerWidget::calculateClippedPolygon(const QVector<QPoint>& sou
             else { // inak (Поточна точка P ЗОВНІ)
 
                 if (P1in) {
-                    // ak Sx >= xmin (Попередня точка S ВСЕРЕДИНІ)
-                    // Випадок: ВНУТРІ -> ЗОВНІ
 
                     // vypočítaj priesečník Pi
                     double t = (border < 2) ? (double)((border==0?0:xmax) - P1.x()) / (P2.x() - P1.x())
@@ -547,8 +542,6 @@ QVector<QPoint> ViewerWidget::calculateClippedPolygon(const QVector<QPoint>& sou
 
                     W.append(priesecnik); // pridaj ho (Pi) do W
                 }
-                // inak: (Обидві точки зовні. Випадок: ЗОВНІ -> ЗОВНІ).
-                // Не робимо нічого (žiadna akcia).
             }
 
             P1 = P2; // aktualizuj bod S = Vi

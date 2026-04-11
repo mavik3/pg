@@ -221,7 +221,7 @@ void ImageViewer::on_actionSave_as_triggered()
 			msgBox.setText(QString("File %1 saved.").arg(fileName));
 			msgBox.setIcon(QMessageBox::Information);
 		}
-		msgBox.exec();
+        msgBox.exec();
 	}
 }
 void ImageViewer::on_actionClear_triggered()
@@ -350,3 +350,20 @@ void ImageViewer::on_FillType_currentIndexChanged(int index)
     vW->redrawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex());
 }
 
+void ImageViewer::on_actionSave_3D_triggered()
+{
+    QString fileName = QFileDialog::getSaveFileName(this, "Save 3D model", "", "VTK files (*.vtk)");
+    if (fileName.isEmpty()) return;
+
+    if (Object.saveToVTK(fileName)) {
+        QMessageBox::information(this, "Success!", "VTK file was saved!");
+    }
+    else {
+        QMessageBox::critical(this, "Error!", "VTK file was not saved!");
+    }
+}
+
+void ImageViewer::on_pbCube_clicked(){
+    double a = ui->spinCube->value();
+    Object.createCube(a);
+}

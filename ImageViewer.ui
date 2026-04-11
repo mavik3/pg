@@ -51,6 +51,9 @@
     <addaction name="actionSave_as"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
+    <addaction name="separator"/>
+    <addaction name="actionSave_3D"/>
+    <addaction name="actionOpen_3D"/>
    </widget>
    <widget class="QMenu" name="menuImage">
     <property name="title">
@@ -318,6 +321,20 @@
       </layout>
      </item>
      <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_8">
+       <item>
+        <widget class="QDoubleSpinBox" name="spinCube"/>
+       </item>
+       <item>
+        <widget class="QPushButton" name="pbCube">
+         <property name="text">
+          <string>Cube</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
       <spacer name="verticalSpacer">
        <property name="orientation">
         <enum>Qt::Orientation::Vertical</enum>
@@ -365,6 +382,16 @@
   <action name="actionResize">
    <property name="text">
     <string>Resize</string>
+   </property>
+  </action>
+  <action name="actionSave_3D">
+   <property name="text">
+    <string>Save_3D</string>
+   </property>
+  </action>
+  <action name="actionOpen_3D">
+   <property name="text">
+    <string>Open_3D</string>
    </property>
   </action>
  </widget>

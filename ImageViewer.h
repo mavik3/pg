@@ -6,6 +6,7 @@
 #include <QtWidgets>
 #include "ui_ImageViewer.h"
 #include "ViewerWidget.h"
+#include "Mesh.h"
 
 class ImageViewer : public QMainWindow
 {
@@ -24,6 +25,7 @@ private:
     QColor colorT0;
     QColor colorT1;
     QColor colorT2;
+    Mesh Object;
 
     bool circleInProgress = false;
 
@@ -52,6 +54,7 @@ private slots:
 	void on_actionSave_as_triggered();
 	void on_actionClear_triggered();
 	void on_actionExit_triggered();
+    void on_actionSave_3D_triggered();
 
     void on_Rotation_clicked();
     void on_Scale_clicked();
@@ -66,4 +69,6 @@ private slots:
 
     void on_pushButtonSetColor_clicked();
     void on_FillType_currentIndexChanged(int index);
+
+    void on_pbCube_clicked();
 };
