@@ -323,7 +323,11 @@
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout_8">
        <item>
-        <widget class="QDoubleSpinBox" name="spinSize"/>
+        <widget class="QDoubleSpinBox" name="spinSize">
+         <property name="maximum">
+          <double>400.000000000000000</double>
+         </property>
+        </widget>
        </item>
        <item>
         <widget class="QPushButton" name="pbCube">
@@ -397,9 +401,27 @@
         </widget>
        </item>
        <item>
-        <widget class="QSpinBox" name="SpinDistance"/>
+        <widget class="QSpinBox" name="SpinDistance">
+         <property name="maximum">
+          <number>1000</number>
+         </property>
+        </widget>
        </item>
       </layout>
+     </item>
+     <item>
+      <widget class="QComboBox" name="comboBoxProjection">
+       <item>
+        <property name="text">
+         <string>Perspective</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Parallel</string>
+        </property>
+       </item>
+      </widget>
      </item>
      <item>
       <spacer name="verticalSpacer">

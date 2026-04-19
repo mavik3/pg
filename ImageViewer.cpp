@@ -366,27 +366,42 @@ void ImageViewer::on_actionSave_3D_triggered()
 }
 
 void ImageViewer::on_pbCube_clicked(){
-    double a = ui->spinSize->value();
-    Object.createCube(a);
-    std::cout << a;
+    Object.createCube(ui->spinSize->value());
 }
 void ImageViewer::on_pbSphere_clicked(){
-    double r = ui->spinSize->value();
-    int n = ui->spinStacks->value();
-    Object.createSphere(r, n);
-    std::cout << n << r;
-    qDebug() << "--- SPHERE GENERATION DEBUG ---";
-    qDebug() << "Radius:" << r << "Stacks:" << n;
-    qDebug() << "Tpoints count:" << Object.getTPoints().size();
-    qDebug() << "Triangles count:" << Object.getObj().size();
+    Object.createSphere(ui->spinSize->value(), ui->spinStacks->value());
 }
+void ImageViewer::renderScene(){
+
+    Object.setVectorNorm(ui->Slider_Thetta->value(), ui->Slider_Phi->value());
+
+    QVector<Vertex3D> Mpoints = Object.mutation(Object.getVectorNorm());
+    QVector<Vertex3D> OrigPoints = Object.getTpoints();
+    if(ui->comboBoxProjection->currentIndex() == 1)
+        Object.parallelProj(OrigPoints);
+    else
+        Object.perspectiveProj(Mpoints, ui->SpinDistance->value());
+
+    vW->Draw3DObject(Mpoints, Object.getObj());
+}
+
 void ImageViewer::on_pbProjection_clicked(){
     Object.createCube(ui->spinSize->value());
-    Object.setVectorNorm(ui->Slider_Thetta->value(), ui->Slider_Phi->value());
-    QVector<Vertex3D> Mpoints = Object.mutation(Object.getVectorNorm());
-    Object.parallelProj(Mpoints, ui->SpinDistance->value());
-    vW->Draw3DObject(Mpoints, Object.getObj());
-     // Це викличе paintEvent
+    renderScene();
+}
+
+void ImageViewer::on_Slider_Thetta_valueChanged(int value){
+    ui->Label_Thetta->setText(QString("%1°").arg(value));
+    renderScene();
+}
+
+void ImageViewer::on_Slider_Phi_valueChanged(int value){
+    ui->Label_Phi->setText(QString("%1°").arg(value));
+    renderScene();
+}
+
+void ImageViewer::on_SpinDistance_valueChanged(double d) {
+    renderScene();
 }
 
 

@@ -6,15 +6,17 @@
 void Mesh::createCube(double a){
     Tpoints.clear();
     Obj.clear();
+    double half = a / 2.0;
     for (int z = 0; z <= 1; z++) {
         for (int y = 0; y <= 1; y++) {
             for (int x = 0; x <= 1; x++) {
-                Tpoints.push_back({(double)(x * a), (double)(y * a), (double)(z * a)});
+                double px = (x == 0) ? -half : half;
+                double py = (y == 0) ? -half : half;
+                double pz = (z == 0) ? -half : half;
+                Tpoints.push_back({px, py, pz});
             }
         }
     }
-    //musim potom este raz preist tuto cast a
-    //optimalizovat ju (myslim ze to mozne spravit)
 
     addObject(0,1,3);
     addObject(0,2,3);
@@ -148,8 +150,16 @@ bool Mesh::saveToVTK(QString filename){
 void Mesh::setVectorNorm(int Thetta, int Phi){
     VectorNorm.clear();
 
-    Vertex3D n = {sin(Thetta) * cos(Phi), sin(Thetta) * sin(Phi), cos(Thetta)};
-    Vertex3D u = {sin(Thetta + M_PI / 2) * cos(Phi), sin(Thetta + M_PI / 2) * sin(Phi), cos(Thetta + M_PI / 2)};
+
+    double radThetta = Thetta * M_PI / 180.0;
+    double radPhi = Phi * M_PI / 180.0;
+
+    Vertex3D n = {sin(radThetta) * sin(radPhi),
+                  sin(radThetta) * cos(radPhi),
+                  cos(radThetta)};
+    Vertex3D u = {sin(radThetta + M_PI / 2) * sin(radPhi),
+                  sin(radThetta + M_PI / 2) * cos(radPhi),
+                  cos(radThetta + M_PI / 2)};
     Vertex3D v = {n.y * u.z - n.z * u.y,
                   n.z * u.x - n.x * u.z,
                   n.x * u.y - n.y * u.x};
@@ -177,17 +187,33 @@ QVector<Vertex3D> Mesh::mutation(const QVector<Vertex3D>& VectorNorm){
     }
     return Mpoints;
 }
-void Mesh::parallelProj(QVector<Vertex3D>& points, int d){
+void Mesh::parallelProj(QVector<Vertex3D>& points){
     double a = VectorNorm[0].x;
     double b = VectorNorm[0].y;
     double c = VectorNorm[0].z;
     double low = a * a + b * b + c * c;
     for (int i = 0; i < points.size(); i++){
-        double high = a * points[i].x + b * points[i].y + c * points[i].z + d;
+        double high = a * points[i].x + b * points[i].y + c * points[i].z;
         points[i].x -= a * high / low;
         points[i].y -= b * high / low;
         points[i].z -= c * high / low;
     }
 }
+void Mesh::perspectiveProj(QVector<Vertex3D>& points, int d){
+    double a = VectorNorm[0].x;
+    double b = VectorNorm[0].y;
+    double c = VectorNorm[0].z;
+    for (int i = 0; i <points.size(); i++){
+        double x = points[i].x;
+        double y = points[i].y;
+        double z = points[i].z;
+        double low = a * (- x) + b * (- y) + c * (d - z);
+        double high = a * x + b * y + c * z + d;
+        points[i].x += x * high / low;
+        points[i].y += y * high / low;
+        points[i].z += (z - d) * high / low;
+    }
+}
+
 
 

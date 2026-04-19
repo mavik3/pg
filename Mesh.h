@@ -29,7 +29,7 @@ private:
     }
 public:
     QVector<Triangle> getObj() const {return Obj;}
-    QVector<Vertex3D> getTPoints() const {return Tpoints;}
+    QVector<Vertex3D> getTpoints() const {return Tpoints;}
 
     void setObj(const QVector<Triangle>& t){Obj = t;}
     void setTpoints(const QVector<Vertex3D>& Tp) {Tpoints = Tp;}
@@ -48,8 +48,9 @@ public:
     double getPhi() const {return Phi;}
     QVector<Vertex3D>& getVectorNorm() {return VectorNorm;}
     QVector<Vertex3D> mutation(const QVector<Vertex3D>& VectorNorm);
-    void parallelProj(QVector<Vertex3D>& points, int d);
 
-
+    void parallelProj(QVector<Vertex3D>& points);
+    void perspectiveProj(QVector<Vertex3D>& points, int d);
+    void Projection(int index);
 
 };
