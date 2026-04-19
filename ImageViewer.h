@@ -25,6 +25,7 @@ private:
     QColor colorT0;
     QColor colorT1;
     QColor colorT2;
+
     Mesh Object;
 
     bool circleInProgress = false;
@@ -72,4 +73,13 @@ private slots:
 
     void on_pbCube_clicked();
     void on_pbSphere_clicked();
+    void on_Slider_Thetta_valueChanged(int value) {
+        ui->Label_Thetta->setText(QString("%1°").arg(value));
+        Object.setThetta(ui->Slider_Thetta->value());
+    }
+    void on_Slider_Phi_valueChanged(int value) {
+        ui->Label_Phi->setText(QString("%1°").arg(value));
+        Object.setPhi(ui->Slider_Phi->value());
+    }
+    void on_pbProjection_clicked();
 };

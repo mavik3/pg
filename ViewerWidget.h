@@ -1,5 +1,6 @@
 #pragma once
 #include <QtWidgets>
+#include "Mesh.h"
 
 struct Vertex{
     QPoint pos;
@@ -121,6 +122,8 @@ public:
     QColor getColor(int x, int y, int fillType);
 
     void updateTriangleLogic();
+
+    void Draw3DObject(const QVector<Vertex3D>& points, const QVector<Triangle>& triangles);
 
 
 public slots:

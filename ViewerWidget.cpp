@@ -802,3 +802,30 @@ void ViewerWidget::paintEvent(QPaintEvent* event)//головна функція
     QRect area = event->rect();// прямокутник, оптимізація  "пошкодженої частини", не завжди треба перемальовувати весь
 	painter.drawImage(area, *img, area);//vykresli novy obrazok
 }
+
+void ViewerWidget::Draw3DObject(const QVector<Vertex3D>& points, const QVector<Triangle>& triangles){
+    if (points.isEmpty()) return;
+    img->fill(Qt::white);
+    int centerX = img->width() / 2;
+    int centerY = img->height() / 2;
+
+    for(const auto& tri : triangles){
+        QVector<QPoint> poly2D;
+        int indices[3] = {tri.v1, tri.v2, tri.v3};
+        for (int i = 0; i < 3; i++){
+            Vertex3D v = points[indices[i]];
+            int screenX = static_cast<int>(centerX + v.x);
+            int screenY = static_cast<int>(centerY + v.y);
+
+            poly2D.append(QPoint(screenX,screenY));
+        }
+        /*if (fillEnabled) {
+            this->polygonPoints = poly2D;
+            Scan_line(Qt::blue);
+        }*/
+        for (int i = 0; i < 3; i++) {
+            drawLine(poly2D[i], poly2D[(i + 1) % 3], Qt::black, 1);
+        }
+    }
+    update();
+}

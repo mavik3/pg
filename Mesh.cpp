@@ -144,3 +144,50 @@ bool Mesh::saveToVTK(QString filename){
     file.close();
     return true;
 }
+
+void Mesh::setVectorNorm(int Thetta, int Phi){
+    VectorNorm.clear();
+
+    Vertex3D n = {sin(Thetta) * cos(Phi), sin(Thetta) * sin(Phi), cos(Thetta)};
+    Vertex3D u = {sin(Thetta + M_PI / 2) * cos(Phi), sin(Thetta + M_PI / 2) * sin(Phi), cos(Thetta + M_PI / 2)};
+    Vertex3D v = {n.y * u.z - n.z * u.y,
+                  n.z * u.x - n.x * u.z,
+                  n.x * u.y - n.y * u.x};
+    VectorNorm.push_back(n);
+    VectorNorm.push_back(u);
+    VectorNorm.push_back(v);
+}
+
+QVector<Vertex3D> Mesh::mutation(const QVector<Vertex3D>& VectorNorm){
+    QVector<Vertex3D> Mpoints;
+    if (VectorNorm.size() < 3) return Tpoints;
+    if (!Tpoints.isEmpty()){
+        for(int i = 0; i < Tpoints.size(); i++){
+            Vertex3D W = {Tpoints[i].x * VectorNorm[0].x +
+                              Tpoints[i].y * VectorNorm[0].y +
+                              Tpoints[i].z * VectorNorm[0].z,
+                          Tpoints[i].x * VectorNorm[1].x +
+                              Tpoints[i].y * VectorNorm[1].y +
+                              Tpoints[i].z * VectorNorm[1].z,
+                          Tpoints[i].x * VectorNorm[2].x +
+                              Tpoints[i].y * VectorNorm[2].y +
+                              Tpoints[i].z * VectorNorm[2].z};
+            Mpoints.push_back(W);
+        }
+    }
+    return Mpoints;
+}
+void Mesh::parallelProj(QVector<Vertex3D>& points, int d){
+    double a = VectorNorm[0].x;
+    double b = VectorNorm[0].y;
+    double c = VectorNorm[0].z;
+    double low = a * a + b * b + c * c;
+    for (int i = 0; i < points.size(); i++){
+        double high = a * points[i].x + b * points[i].y + c * points[i].z + d;
+        points[i].x -= a * high / low;
+        points[i].y -= b * high / low;
+        points[i].z -= c * high / low;
+    }
+}
+
+

@@ -22,6 +22,8 @@ ImageViewer::ImageViewer(QWidget* parent)
     ui->spinShear->setRange(-1,1);
 	vW->setObjectName("ViewerWidget"); //aby nazvat objekt
 	vW->installEventFilter(this);
+    ui->Slider_Thetta->setRange(-90,90);
+    ui->Slider_Phi->setRange(0,360);
 
 	globalColor = Qt::blue; //farba
 	QString style_sheet = QString("background-color: %1;").arg(globalColor.name(QColor::HexRgb));
@@ -378,3 +380,13 @@ void ImageViewer::on_pbSphere_clicked(){
     qDebug() << "Tpoints count:" << Object.getTPoints().size();
     qDebug() << "Triangles count:" << Object.getObj().size();
 }
+void ImageViewer::on_pbProjection_clicked(){
+    Object.createCube(ui->spinSize->value());
+    Object.setVectorNorm(ui->Slider_Thetta->value(), ui->Slider_Phi->value());
+    QVector<Vertex3D> Mpoints = Object.mutation(Object.getVectorNorm());
+    Object.parallelProj(Mpoints, ui->SpinDistance->value());
+    vW->Draw3DObject(Mpoints, Object.getObj());
+     // Це викличе paintEvent
+}
+
+
