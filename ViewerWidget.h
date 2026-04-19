@@ -34,6 +34,7 @@ private:
     int currentFillType = 0;
 
     bool CircleF = false;
+    Mesh Object;
 
 
 public:

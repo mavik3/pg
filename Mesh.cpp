@@ -188,7 +188,7 @@ QVector<Vertex3D> Mesh::mutation(const QVector<Vertex3D>& VectorNorm){
     return Mpoints;
 }
 void Mesh::parallelProj(QVector<Vertex3D>& points){
-    double a = VectorNorm[0].x;
+    /*double a = VectorNorm[0].x;
     double b = VectorNorm[0].y;
     double c = VectorNorm[0].z;
     double low = a * a + b * b + c * c;
@@ -197,10 +197,13 @@ void Mesh::parallelProj(QVector<Vertex3D>& points){
         points[i].x -= a * high / low;
         points[i].y -= b * high / low;
         points[i].z -= c * high / low;
-    }
+    }*/
+    for (int i = 0; i < points.size(); i++){
+        points[i].z = 0;}
+
 }
-void Mesh::perspectiveProj(QVector<Vertex3D>& points, int d){
-    double a = VectorNorm[0].x;
+/*void Mesh::perspectiveProj(QVector<Vertex3D>& points, int d){
+   *double a = VectorNorm[0].x;
     double b = VectorNorm[0].y;
     double c = VectorNorm[0].z;
     for (int i = 0; i <points.size(); i++){
@@ -213,7 +216,28 @@ void Mesh::perspectiveProj(QVector<Vertex3D>& points, int d){
         points[i].y += y * high / low;
         points[i].z += (z - d) * high / low;
     }
-}
+   *for (int i = 0; i <points.size(); i++){
+        double x = points[i].x;
+        double y = points[i].y;
+        double z = points[i].z;
+        points[i].x = d * x / z;
+        points[i].y = d * y / z;
+        points[i].z = 0;
+     }
+}*/
+void Mesh::perspectiveProj(QVector<Vertex3D>& points, int d) {
+    for (int i = 0; i < points.size(); i++) {
 
+        double z_coords = points[i].z;
+
+        double divisor = (d - z_coords);
+
+        if (qAbs(divisor) > 0.0001) {
+            points[i].x = (points[i].x * d) / divisor;
+            points[i].y = (points[i].y * d) / divisor;
+            points[i].z = 0;
+        }
+    }
+}
 
 

@@ -378,7 +378,7 @@ void ImageViewer::renderScene(){
     QVector<Vertex3D> Mpoints = Object.mutation(Object.getVectorNorm());
     QVector<Vertex3D> OrigPoints = Object.getTpoints();
     if(ui->comboBoxProjection->currentIndex() == 1)
-        Object.parallelProj(OrigPoints);
+        Object.parallelProj(Mpoints);
     else
         Object.perspectiveProj(Mpoints, ui->SpinDistance->value());
 

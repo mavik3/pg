@@ -819,10 +819,17 @@ void ViewerWidget::Draw3DObject(const QVector<Vertex3D>& points, const QVector<T
 
             poly2D.append(QPoint(screenX,screenY));
         }
-        /*if (fillEnabled) {
-            this->polygonPoints = poly2D;
-            Scan_line(Qt::blue);
-        }*/
+        if (fillEnabled) {
+            // Твої структури Vertex t1, t2, t3 мають отримати координати
+            // з нашого poly2D, де індекси ЗАВЖДИ 0, 1 та 2
+            Vertex t1 = { poly2D[0], Qt::red};
+            Vertex t2 = { poly2D[1], Qt::blue};
+            Vertex t3 = { poly2D[2], Qt::green};
+
+            fillTriangle(t1, t2, t3, currentFillType);
+        }
+
+
         for (int i = 0; i < 3; i++) {
             drawLine(poly2D[i], poly2D[(i + 1) % 3], Qt::black, 1);
         }
