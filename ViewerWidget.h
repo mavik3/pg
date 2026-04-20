@@ -36,6 +36,8 @@ private:
     bool CircleF = false;
     Mesh Object;
 
+    QVector<double> zBuffer;
+
 
 public:
 	ViewerWidget(QSize imgSize, QWidget* parent = Q_NULLPTR);
@@ -124,7 +126,11 @@ public:
 
     void updateTriangleLogic();
 
-    void Draw3DObject(const QVector<Vertex3D>& points, const QVector<Triangle>& triangles);
+    void Draw3DObject(const QVector<QPoint>& points, const QVector<Triangle>& triangles);
+
+    QVector<double> getZBuffer() const {return zBuffer;}
+    void setZBuffer(QVector<double> zbuffer){zBuffer = zbuffer;}
+    void ZPixel(int x, int y, int z, QColor color);
 
 
 public slots:

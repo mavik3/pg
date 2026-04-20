@@ -669,7 +669,6 @@ void ViewerWidget::fillTrianglePart(int y1, int y2, double x1, double x2, double
         for (int x = startX; x <= endX; x++) {
             setPixel(x, y, getColor(x, y, fillType));
         }
-
         x1 += w1;
         x2 += w2;
     }
@@ -786,13 +785,6 @@ void ViewerWidget::updateTriangleLogic(){
         base_t2.pos = originalPoints[2];
     }
 }
-
-
-
-
-
-
-
 //Slots
 void ViewerWidget::paintEvent(QPaintEvent* event)//головна функція яку викликає qt
 {
@@ -803,7 +795,7 @@ void ViewerWidget::paintEvent(QPaintEvent* event)//головна функція
 	painter.drawImage(area, *img, area);//vykresli novy obrazok
 }
 
-void ViewerWidget::Draw3DObject(const QVector<Vertex3D>& points, const QVector<Triangle>& triangles){
+void ViewerWidget::Draw3DObject(const QVector<QPoint>& points, const QVector<Triangle>& triangles){
     if (points.isEmpty()) return;
     img->fill(Qt::white);
     int centerX = img->width() / 2;
@@ -813,9 +805,9 @@ void ViewerWidget::Draw3DObject(const QVector<Vertex3D>& points, const QVector<T
         QVector<QPoint> poly2D;
         int indices[3] = {tri.v1, tri.v2, tri.v3};
         for (int i = 0; i < 3; i++){
-            Vertex3D v = points[indices[i]];
-            int screenX = static_cast<int>(centerX + v.x);
-            int screenY = static_cast<int>(centerY + v.y);
+            QPoint v = points[indices[i]];
+            int screenX = static_cast<int>(centerX + v.x());
+            int screenY = static_cast<int>(centerY + v.y());
 
             poly2D.append(QPoint(screenX,screenY));
         }
@@ -829,10 +821,17 @@ void ViewerWidget::Draw3DObject(const QVector<Vertex3D>& points, const QVector<T
             fillTriangle(t1, t2, t3, currentFillType);
         }
 
-
         for (int i = 0; i < 3; i++) {
             drawLine(poly2D[i], poly2D[(i + 1) % 3], Qt::black, 1);
         }
     }
     update();
+}
+void ViewerWidget::ZPixel(int x, int y, int z, QColor color){
+    if(zBuffer.isEmpty()) return;
+    int index = y * img->width() + x;
+    if (z > zBuffer[index]){
+        zBuffer[index] = z;
+        img->setPixel(x,y, color.rgb());
+    }
 }

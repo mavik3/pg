@@ -377,13 +377,16 @@ void ImageViewer::renderScene(){
 
     QVector<Vertex3D> Mpoints = Object.mutation(Object.getVectorNorm());
     QVector<Vertex3D> OrigPoints = Object.getTpoints();
-    if(ui->comboBoxProjection->currentIndex() == 1)
-        Object.parallelProj(Mpoints);
-    else
-        Object.perspectiveProj(Mpoints, ui->SpinDistance->value());
-
-    vW->Draw3DObject(Mpoints, Object.getObj());
+    if(ui->comboBoxProjection->currentIndex() == 1){
+        QVector<QPoint> P = Object.parallelProj(Mpoints);
+        vW->Draw3DObject(P, Object.getObj());
+    }
+    else{
+        QVector<QPoint> P =Object.perspectiveProj(Mpoints, ui->SpinDistance->value());
+        vW->Draw3DObject(P, Object.getObj());
+    }
 }
+
 
 void ImageViewer::on_pbProjection_clicked(){
     Object.createCube(ui->spinSize->value());

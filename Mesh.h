@@ -1,6 +1,7 @@
 #pragma once
 #include <QVector>
 #include <QString>
+#include <QPoint>
 
 
 using namespace std;
@@ -49,8 +50,8 @@ public:
     QVector<Vertex3D>& getVectorNorm() {return VectorNorm;}
     QVector<Vertex3D> mutation(const QVector<Vertex3D>& VectorNorm);
 
-    void parallelProj(QVector<Vertex3D>& points);
-    void perspectiveProj(QVector<Vertex3D>& points, int d);
+    QVector<QPoint> parallelProj(QVector<Vertex3D>& points);
+    QVector<QPoint> perspectiveProj(QVector<Vertex3D>& points, int d);
     void Projection(int index);
 
 };
