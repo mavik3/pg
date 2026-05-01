@@ -3,6 +3,7 @@
 #include <fstream>
 #include <sstream>
 #include <cmath>
+#include <QRandomGenerator>
 void Mesh::createCube(double a){
     Tpoints.clear();
     Obj.clear();
@@ -35,7 +36,9 @@ void Mesh::createCube(double a){
 
     addObject(7,5,4);
     addObject(7,6,4);
-
+    for (int i = 0; i < Obj.size(); i++){
+        colorMesh.push_back(QColor(QRandomGenerator::global()->bounded(256),QRandomGenerator::global()->bounded(256),QRandomGenerator::global()->bounded(256)));
+    }
 }
 
 void Mesh::createSphere(double r, int stacks){
@@ -187,7 +190,7 @@ QVector<Vertex3D> Mesh::mutation(const QVector<Vertex3D>& VectorNorm){
     }
     return Mpoints;
 }
-QVector<QPoint> Mesh::parallelProj(QVector<Vertex3D>& points){
+QVector<Vertex3D> Mesh::parallelProj(QVector<Vertex3D>& points){
     /*double a = VectorNorm[0].x;
     double b = VectorNorm[0].y;
     double c = VectorNorm[0].z;
@@ -198,9 +201,9 @@ QVector<QPoint> Mesh::parallelProj(QVector<Vertex3D>& points){
         points[i].y -= b * high / low;
         points[i].z -= c * high / low;
     }*/
-    QVector<QPoint> Parallel;
+    QVector<Vertex3D> Parallel;
     for (int i = 0; i < points.size(); i++){
-        Parallel.push_back(QPoint{int(points[i].x), int(points[i].y)});
+        Parallel.push_back({points[i].x,points[i].y,points[i].z});
     }
     return Parallel;
 
@@ -228,8 +231,8 @@ QVector<QPoint> Mesh::parallelProj(QVector<Vertex3D>& points){
         points[i].z = 0;
      }
 }*/
-QVector<QPoint> Mesh::perspectiveProj(QVector<Vertex3D>& points, int d) {
-    QVector<QPoint> Perspective;
+QVector<Vertex3D> Mesh::perspectiveProj(QVector<Vertex3D>& points, int d) {
+    QVector<Vertex3D> Perspective;
     for (int i = 0; i < points.size(); i++) {
 
         double z_coords = points[i].z;
@@ -237,7 +240,7 @@ QVector<QPoint> Mesh::perspectiveProj(QVector<Vertex3D>& points, int d) {
         double divisor = (d - z_coords);
 
         if (qAbs(divisor) > 0.0001) {
-            Perspective.push_back(QPoint{int(points[i].x * d / divisor), int(points[i].y * d / divisor)});
+            Perspective.push_back({points[i].x * d / divisor, points[i].y * d / divisor,points[i].z});
         }
     }
     return Perspective;

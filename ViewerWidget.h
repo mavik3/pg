@@ -7,6 +7,7 @@ struct Vertex{
     QColor color;
 };
 
+
 class ViewerWidget :public QWidget {
 	Q_OBJECT
 private:
@@ -36,7 +37,7 @@ private:
     bool CircleF = false;
     Mesh Object;
 
-    QVector<double> zBuffer;
+    QVector<QVector<double>> zBuffer;
 
 
 public:
@@ -103,7 +104,7 @@ public:
     // Змінюємо функцію: тепер вона приймає вхідні точки і повертає відсічені
     QVector<QPoint> calculateClippedPolygon(const QVector<QPoint>& sourcePoints);
 
-    void Scan_line(const QColor& color);
+    void Scan_line(QVector<QPoint>& points, double z, const QColor& color);
 
     void setTriangleVertixes(Vertex t0, Vertex t1, Vertex t2) {
         base_t0 = t0;
@@ -126,11 +127,13 @@ public:
 
     void updateTriangleLogic();
 
-    void Draw3DObject(const QVector<QPoint>& points, const QVector<Triangle>& triangles);
+    void Draw3DObject(const QVector<Vertex3D>& points, const QVector<Triangle>& triangles);
 
-    QVector<double> getZBuffer() const {return zBuffer;}
-    void setZBuffer(QVector<double> zbuffer){zBuffer = zbuffer;}
-    void ZPixel(int x, int y, int z, QColor color);
+    QVector<QVector<double>>& getZBuffer() {return zBuffer;}
+    void setZBuffer(QVector<QVector<double>> zbuffer){zBuffer = zbuffer;}
+    void ZPixel(int x, int y, double z, QColor color);
+
+    void fill3D(QVector<Vertex3D>& points);
 
 
 public slots:

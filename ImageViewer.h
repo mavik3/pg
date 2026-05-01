@@ -77,7 +77,6 @@ private slots:
     void on_Slider_Thetta_valueChanged(int value);
     void on_Slider_Phi_valueChanged(int value);
 
-    void on_pbProjection_clicked();
     void renderScene();
     void on_SpinDistance_valueChanged(double d);
 };

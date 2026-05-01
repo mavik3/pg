@@ -367,9 +367,11 @@ void ImageViewer::on_actionSave_3D_triggered()
 
 void ImageViewer::on_pbCube_clicked(){
     Object.createCube(ui->spinSize->value());
+    renderScene();
 }
 void ImageViewer::on_pbSphere_clicked(){
     Object.createSphere(ui->spinSize->value(), ui->spinStacks->value());
+    renderScene();
 }
 void ImageViewer::renderScene(){
 
@@ -378,19 +380,13 @@ void ImageViewer::renderScene(){
     QVector<Vertex3D> Mpoints = Object.mutation(Object.getVectorNorm());
     QVector<Vertex3D> OrigPoints = Object.getTpoints();
     if(ui->comboBoxProjection->currentIndex() == 1){
-        QVector<QPoint> P = Object.parallelProj(Mpoints);
+        QVector<Vertex3D> P = Object.parallelProj(Mpoints);
         vW->Draw3DObject(P, Object.getObj());
     }
     else{
-        QVector<QPoint> P =Object.perspectiveProj(Mpoints, ui->SpinDistance->value());
+        QVector<Vertex3D> P =Object.perspectiveProj(Mpoints, ui->SpinDistance->value());
         vW->Draw3DObject(P, Object.getObj());
     }
-}
-
-
-void ImageViewer::on_pbProjection_clicked(){
-    Object.createCube(ui->spinSize->value());
-    renderScene();
 }
 
 void ImageViewer::on_Slider_Thetta_valueChanged(int value){

@@ -1,8 +1,10 @@
 #include   "ViewerWidget.h"
+#include <cfloat>
 #include <cmath>
 #include <QtMath>
 #include <algorithm>
 #include <QVector2D>
+#include <climits>
 
 ViewerWidget::ViewerWidget(QSize imgSize, QWidget* parent)
 	: QWidget(parent)
@@ -14,6 +16,7 @@ ViewerWidget::ViewerWidget(QSize imgSize, QWidget* parent)
         img->fill(Qt::white); //заповнює поле білим
         resizeWidget(img->size());//робить розмір віджета рівним розміру картинки
         setDataPtr(); //записує кількість байтів
+
 	}
 }
 ViewerWidget::~ViewerWidget()
@@ -354,7 +357,7 @@ void ViewerWidget::redrawPolygon(const QColor& color, int algType)
             // Якщо це багатокутник - заливаємо через Scan_line
             else if (originalPoints.size() > 3) {
                 this->polygonPoints = clipped;
-                Scan_line(color);
+                Scan_line(polygonPoints, 0, color);
             }
         }
 
@@ -551,16 +554,16 @@ QVector<QPoint> ViewerWidget::calculateClippedPolygon(const QVector<QPoint>& sou
 
     return V;
 }
-void ViewerWidget::Scan_line(const QColor& color)
+void ViewerWidget::Scan_line(QVector<QPoint>& points, double z, const QColor& color)
 {
-    if (!img || polygonPoints.size() < 3)
+    if (!img || points.size() < 3)
         return;
 
-    int ymin = polygonPoints[0].y();
-    int ymax = polygonPoints[0].y();
+    int ymin = points[0].y();
+    int ymax = points[0].y();
 
     // знайти вертикальні межі полігона
-    for (const QPoint& p : polygonPoints) {
+    for (const QPoint& p : points) {
         if (p.y() < ymin) ymin = p.y();
         if (p.y() > ymax) ymax = p.y();
     }
@@ -574,9 +577,9 @@ void ViewerWidget::Scan_line(const QColor& color)
         QVector<int> xYes;
 
         // шукаємо всі перетини рядка y з ребрами полігона
-        for (int i = 0; i < polygonPoints.size(); i++) {
-            QPoint p1 = polygonPoints[i];
-            QPoint p2 = polygonPoints[(i + 1) % polygonPoints.size()];
+        for (int i = 0; i < points.size(); i++) {
+            QPoint p1 = points[i];
+            QPoint p2 = points[(i + 1) % points.size()];
 
             // горизонтальні ребра пропускаємо
             if (p1.y() == p2.y())
@@ -609,7 +612,7 @@ void ViewerWidget::Scan_line(const QColor& color)
             xEnd   = std::min(img->width() - 1, xEnd);
 
             for (int x = xStart; x < xEnd; x++) {
-                    setPixel(x, y, color); // Якщо це звичайний багатокутник
+                    ZPixel(x, y, z, color); // Якщо це звичайний багатокутник
                 }
             }
         }
@@ -794,44 +797,79 @@ void ViewerWidget::paintEvent(QPaintEvent* event)//головна функція
     QRect area = event->rect();// прямокутник, оптимізація  "пошкодженої частини", не завжди треба перемальовувати весь
 	painter.drawImage(area, *img, area);//vykresli novy obrazok
 }
-
-void ViewerWidget::Draw3DObject(const QVector<QPoint>& points, const QVector<Triangle>& triangles){
+//treba zmenit naspat QPoint na Verte3D
+void ViewerWidget::Draw3DObject(const QVector<Vertex3D>& points, const QVector<Triangle>& triangles){
     if (points.isEmpty()) return;
+    zBuffer.clear();
+    for (int x = 0; x < img->width(); x++){
+        QVector<double> column;
+        for(int y = 0; y < img->height(); y++){
+            column.push_back(-DBL_MAX);
+        }
+        zBuffer.push_back(column);
+    }
     img->fill(Qt::white);
+
     int centerX = img->width() / 2;
     int centerY = img->height() / 2;
 
     for(const auto& tri : triangles){
+        int i = 0;
         QVector<QPoint> poly2D;
         int indices[3] = {tri.v1, tri.v2, tri.v3};
+        double z0 = points[tri.v1].z;
+        double z1 = points[tri.v2].z;
+        double z2 = points[tri.v3].z;
+        double zABS = (z0 + z1 + z2) / 3.0;
+
         for (int i = 0; i < 3; i++){
-            QPoint v = points[indices[i]];
-            int screenX = static_cast<int>(centerX + v.x());
-            int screenY = static_cast<int>(centerY + v.y());
+            Vertex3D v = points[indices[i]];
+            int screenX = static_cast<int>(centerX + v.x);
+            int screenY = static_cast<int>(centerY + v.y);
 
             poly2D.append(QPoint(screenX,screenY));
         }
         if (fillEnabled) {
-            // Твої структури Vertex t1, t2, t3 мають отримати координати
-            // з нашого poly2D, де індекси ЗАВЖДИ 0, 1 та 2
-            Vertex t1 = { poly2D[0], Qt::red};
-            Vertex t2 = { poly2D[1], Qt::blue};
-            Vertex t3 = { poly2D[2], Qt::green};
-
-            fillTriangle(t1, t2, t3, currentFillType);
+            QColor color = Object.colorMesh[i];
+            if (poly2D.isEmpty()) return;
+            Scan_line(poly2D, zABS, Qt::blue);
         }
-
         for (int i = 0; i < 3; i++) {
             drawLine(poly2D[i], poly2D[(i + 1) % 3], Qt::black, 1);
         }
+
+            // Твої структури Vertex t1, t2, t3 мають отримати координати
+            // з нашого poly2D, де індекси ЗАВЖДИ 0, 1 та 2
+            /*Vertex t1 = { poly2D[0], Qt::red};
+            Vertex t2 = { poly2D[1], Qt::blue};
+            Vertex t3 = { poly2D[2], Qt::green};*/
+        i++;
     }
     update();
 }
-void ViewerWidget::ZPixel(int x, int y, int z, QColor color){
-    if(zBuffer.isEmpty()) return;
-    int index = y * img->width() + x;
-    if (z > zBuffer[index]){
-        zBuffer[index] = z;
-        img->setPixel(x,y, color.rgb());
+        /*if (points.isEmpty()) return;
+    img->fill(Qt::white);
+    int centerX = img->width() / 2;
+    int centerY = img->height() / 2;
+
+    for (int i = 0; i < triangles.size(); i++){
+        QPoint Tpoint[3];
+        for (int j = 0; j < 3; j++){
+            Tpoint[j]  = {int(points[triangles[i].v1].x + centerX), int(points[triangles[i].v1].y + centerY)};
+            //drawLine((i + 1) % 3, Qt::black, 1);
+        }
+        for (int j = 0; j < 3; j++){
+            drawLine(Tpoint[j], Tpoint[(j +1) % 3], Qt::black, 1);
+        }
+    }
+    update();
+}*/
+void ViewerWidget::ZPixel(int x, int y, double z, QColor color){
+    if(x < 0 || x > img->width() || y < 0 || y > img->height())return;
+    //if(zBuffer.isEmpty()){
+      //  setPixel(x,y,color); return;};
+    if (z > zBuffer[x][y]){
+        zBuffer[x][y] = z;
+        setPixel(x,y, color);
     }
 }

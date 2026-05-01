@@ -2,6 +2,7 @@
 #include <QVector>
 #include <QString>
 #include <QPoint>
+#include <QColor>
 
 
 using namespace std;
@@ -35,6 +36,8 @@ public:
     void setObj(const QVector<Triangle>& t){Obj = t;}
     void setTpoints(const QVector<Vertex3D>& Tp) {Tpoints = Tp;}
 
+    QVector<QColor> colorMesh;
+
     void createCube(double a);
     void createSphere(double r, int floor);
 
@@ -50,8 +53,8 @@ public:
     QVector<Vertex3D>& getVectorNorm() {return VectorNorm;}
     QVector<Vertex3D> mutation(const QVector<Vertex3D>& VectorNorm);
 
-    QVector<QPoint> parallelProj(QVector<Vertex3D>& points);
-    QVector<QPoint> perspectiveProj(QVector<Vertex3D>& points, int d);
+    QVector<Vertex3D> parallelProj(QVector<Vertex3D>& points);
+    QVector<Vertex3D> perspectiveProj(QVector<Vertex3D>& points, int d);
     void Projection(int index);
 
 };
