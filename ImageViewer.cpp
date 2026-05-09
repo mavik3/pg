@@ -1,6 +1,6 @@
 #include "ImageViewer.h"
 #include <iostream>
-#include <QValidator>
+//#include <QValidator>
 //QObject
 //QEvent nase situaci
 //pos()- position mouse
@@ -33,7 +33,7 @@ ImageViewer::ImageViewer(QWidget* parent)
     colorT1 = Qt::green;
     colorT2 = Qt::blue;
 
-
+    //sxene.lightColor[1] = ui->colorB;
     /*QDoubleValidator *valDouble = new QDoubleValidator(0.0, 1.0, 100, this);
     valDouble->setNotation(QDoubleValidator::StandardNotation);
     valDouble->setLocale(QLocale::C);
@@ -64,6 +64,7 @@ ImageViewer::ImageViewer(QWidget* parent)
     }*/
 
 }
+
 
 // Event filters
 bool ImageViewer::eventFilter(QObject* obj, QEvent* event)
@@ -414,7 +415,9 @@ void ImageViewer::renderScene(){
     scene.lightPos.y = ui->lightY->value();
     scene.lightPos.z = ui->lightZ->value();
     scene.cameraPos = {0,0,1000};
+//musim skusit ako to funguje pre ine hodnoty
 
+//nahodou este pridat spinbox na kameru(lebo Bozhena povedala ze tak bude spravne ale teraz nechcem)
     scene.lightColor[0] = ui->colorR->value();
     scene.lightColor[1] = ui->colorG->value();
     scene.lightColor[2] = ui->colorB->value();

@@ -17,11 +17,8 @@ struct Vertex3D {
             v.z /= length;
         }
     }
-    Vertex3D operator-(const Vertex3D& V) {
+    Vertex3D operator-(const Vertex3D& V) const{
         return { x - V.x, y - V.y, z - V.z };
-    }
-    static Vertex3D plus(const Vertex3D &a, const Vertex3D &b) {
-        return { a.x + b.x, a.y + b.y, a.z + b.z };
     }
     Vertex3D operator*(const Vertex3D &b) const {
         return {

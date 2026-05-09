@@ -352,7 +352,7 @@ void ViewerWidget::redrawPolygon(const QColor& color, int algType)
             // Якщо це рівно 3 точки - малюємо градієнт через поділ
             if (originalPoints.size() == 3) {
                 updateTriangleLogic(); // Оновлюємо координати base_t
-                fillTriangle(base_t0, base_t1, base_t2,0, currentFillType);
+                fillTriangle(base_t0, base_t1, base_t2, currentFillType);
             }
             // Якщо це багатокутник - заливаємо через Scan_line
             else if (originalPoints.size() > 3) {
@@ -618,7 +618,7 @@ void ViewerWidget::Scan_line(QVector<QPoint>& points, double z, const QColor& co
         }
     }
 
-void ViewerWidget::fillTriangle(Vertex t0, Vertex t1, Vertex t2, double z, int fillType) {
+void ViewerWidget::fillTriangle(Vertex t0, Vertex t1, Vertex t2, int fillType) {
     base_t0 = t0;
     base_t1 = t1;
     base_t2 = t2;
@@ -640,11 +640,11 @@ void ViewerWidget::fillTriangle(Vertex t0, Vertex t1, Vertex t2, double z, int f
 
     if (t0.pos.y() == t1.pos.y()) {
         //pripad: vodorovna horna hrana
-        fillBottomTriangle(t0, t1, t2, z, fillType);
+        fillBottomTriangle(t0, t1, t2, fillType);
     }
     else if (t1.pos.y() == t2.pos.y()) {
         //pripad: vodorovna spodna hrana
-        fillTopTriangle(t0, t1, t2, z, fillType);
+        fillTopTriangle(t0, t1, t2, fillType);
     }
     else {
         QPoint pos_p;
@@ -652,24 +652,24 @@ void ViewerWidget::fillTriangle(Vertex t0, Vertex t1, Vertex t2, double z, int f
         Vertex p = {pos_p, t1.color};
 
         if (t1.pos.x() < p.pos.x()) {
-            fillTopTriangle(t0, t1, p, z, fillType);
-            fillBottomTriangle(t1, p, t2, z, fillType);
+            fillTopTriangle(t0, t1, p, fillType);
+            fillBottomTriangle(t1, p, t2, fillType);
         }
         else {
-            fillTopTriangle(t0, p, t1, z, fillType);
-            fillBottomTriangle(p, t1, t2, z, fillType);
+            fillTopTriangle(t0, p, t1, fillType);
+            fillBottomTriangle(p, t1, t2, fillType);
         }
     }
 }
 
-void ViewerWidget::fillTrianglePart(int y1, int y2, double x1, double x2, double z, double w1, double w2, int fillType)
+void ViewerWidget::fillTrianglePart(int y1, int y2, double x1, double x2, double w1, double w2, int fillType)
 {
     for (int y = y1; y <= y2; y++) {
 
         int startX = (int)std::ceil(std::min(x1, x2));
         int endX = (int)std::floor(std::max(x1, x2));
-
         for (int x = startX; x <= endX; x++) {
+            double z = getInterpolatedZ(x, y, base_t0, base_t1, base_t2);
             ZPixel(x, y, z, getColor(x, y, fillType));
         }
         x1 += w1;
@@ -678,7 +678,7 @@ void ViewerWidget::fillTrianglePart(int y1, int y2, double x1, double x2, double
 }
 
 
-void ViewerWidget::fillBottomTriangle(Vertex t0, Vertex t1, Vertex t2, double z, int fillType)
+void ViewerWidget::fillBottomTriangle(Vertex t0, Vertex t1, Vertex t2, int fillType)
 {
     double w1 = (double)(t2.pos.x() - t0.pos.x()) / (t2.pos.y() - t0.pos.y());
     double w2 = (double)(t2.pos.x() - t1.pos.x()) / (t2.pos.y() - t1.pos.y());
@@ -689,10 +689,10 @@ void ViewerWidget::fillBottomTriangle(Vertex t0, Vertex t1, Vertex t2, double z,
     int y1 = t0.pos.y();
     int y2 = t2.pos.y();
 
-    fillTrianglePart(y1, y2, x1, x2, z, w1, w2, fillType);
+    fillTrianglePart(y1, y2, x1, x2, w1, w2, fillType);
 }
 
-void ViewerWidget::fillTopTriangle(Vertex t0, Vertex t1, Vertex t2, double z, int fillType)
+void ViewerWidget::fillTopTriangle(Vertex t0, Vertex t1, Vertex t2, int fillType)
 {
     //hrany idu zhora nadol: e1 spaja t0-t1, e2 spaja t0-t2
     double w1 = (double)(t1.pos.x() - t0.pos.x()) / (t1.pos.y() - t0.pos.y());
@@ -705,7 +705,7 @@ void ViewerWidget::fillTopTriangle(Vertex t0, Vertex t1, Vertex t2, double z, in
     int y1 = t0.pos.y();
     int y2 = t1.pos.y();
 
-    fillTrianglePart(y1, y2, x1, x2, z, w1, w2, fillType);
+    fillTrianglePart(y1, y2, x1, x2, w1, w2, fillType);
 }
 
 QColor ViewerWidget::getNearestColor(int x, int y, Vertex t0, Vertex t1, Vertex t2)
@@ -817,12 +817,12 @@ void ViewerWidget::Draw3DObject(const QVector<Vertex3D>& points, const QVector<T
         QVector<Vertex> vertex2D;
         int indices[3] = {tri.v1, tri.v2, tri.v3};
         Vertex3D p1, p2, p3;
-        p1 = points[tri.v1];
-        p2 = points[tri.v2];
-        p3 = points[tri.v3];
-        double z0 = p1.z;
-        double z1 = p2.z;
-        double z2 = p3.z;
+        Vertex3D N1, N2, N3;
+        N1 = p1 = points[tri.v1];
+        N2 = p2 = points[tri.v2];
+        N3 = p3 = points[tri.v3];
+        double z0 = p1.z, z1 = p2.z, z2 = p3.z;
+
         double zABS = (z0 + z1 + z2) / 3.0;
 
         Vertex3D e1 = p2 - p1;
@@ -831,31 +831,13 @@ void ViewerWidget::Draw3DObject(const QVector<Vertex3D>& points, const QVector<T
         //toto nasa normal trojugolnika
         Vertex3D N = e1 * e2;
         double length = sqrt(N.x*N.x + N.y*N.y + N.z*N.z);
-        if (length > 0) {N.x /= length; N.y /= length; N.z /= length;}
+        N.normalize(N);
+
+        N1.normalize(N1);
+        N2.normalize(N2);
+        N3.normalize(N3);
         //bod
         Vertex3D P = {(p1.x + p2.x + p3.x)/3.0, (p1.y+p2.y+p3.y)/3.0, (p1.z+p2.z+p3.z)/3.0};
-        //vektor light
-        Vertex3D L = (scene.lightPos - P);
-        L.normalize(L);
-
-        //Vertex3D L = {0, 0, 1};
-        //vektor camera
-        Vertex3D V = (scene.cameraPos - P);
-        V.normalize(V);
-        //intesivita
-        double NL = std::max(0.0, L | N);
-
-
-        Vertex3D R = N * 2.0 * NL - L;
-        R.normalize(R);
-
-        double specular = std::pow(std::max(0.0, V | R), mat.shininess * 10);
-
-        int r = qBound(0, static_cast<int>(mat.amb[0] * scene.Amb[0] + mat.dif[0] * NL * scene.lightColor[0] + mat.ref[0] * specular * scene.lightColor[0]), 255);
-        int g = qBound(0, static_cast<int>(mat.amb[1] * scene.Amb[1] + mat.dif[1] * NL * scene.lightColor[1] + mat.ref[1] * specular * scene.lightColor[1]), 255);
-        int b = qBound(0, static_cast<int>(mat.amb[2] * scene.Amb[2] + mat.dif[2] * NL * scene.lightColor[2] + mat.ref[2] * specular * scene.lightColor[2]), 255);
-
-        QColor faceColor = QColor::fromRgb(r, g, b);
 
         for (int i = 0; i < 3; i++){
             Vertex3D v = points[indices[i]];
@@ -863,27 +845,33 @@ void ViewerWidget::Draw3DObject(const QVector<Vertex3D>& points, const QVector<T
         int screenY = static_cast<int>(centerY + v.y);
                         poly2D.append(QPoint(screenX,screenY));
                     }
-        if (TypeAlg == 1) {
-            if (poly2D.isEmpty()) return;
-        Scan_line(poly2D, zABS, Qt::blue);
-        }
-        else if (TypeAlg == 2){
-            QColor faceColor;
-            // Якщо вектор порожній, генеруємо колір за індексом, щоб не падати
-            faceColor = QColor::fromHsv((i * 40) % 360, 200, 255);
-                        if (poly2D.isEmpty()) return;
-            Scan_line(poly2D, zABS, faceColor);
+        if (TypeAlg < 3){
+            if (TypeAlg == 1) {
+                if (poly2D.isEmpty()) return;
+                Scan_line(poly2D, zABS, Qt::blue);
+            }
+            else if (TypeAlg == 2){
+                QColor faceColor;
+                // Якщо вектор порожній, генеруємо колір за індексом, щоб не падати
+                faceColor = QColor::fromHsv((i * 40) % 360, 200, 255);
+                if (poly2D.isEmpty()) return;
+                Scan_line(poly2D, zABS, faceColor);
+            }
+            for (int i = 0; i < 3; i++) {
+                drawLine(poly2D[i], poly2D[(i + 1) % 3], zABS + 0.1, Qt::black, 0);
+            }
         }
         else if (TypeAlg == 3){
-            Scan_line(poly2D, zABS, faceColor);
+            Scan_line(poly2D, zABS, getPhongColor(P, N,scene, mat));
         }
-        for (int i = 0; i < 3; i++) {
-            drawLine(poly2D[i], poly2D[(i + 1) % 3], zABS + 0.1, Qt::black, 0);
+        else if (TypeAlg == 4){
+            fillTriangle({poly2D[0],getPhongColor(p1,N1,scene, mat), z0},{poly2D[1],getPhongColor(p2,N2,scene, mat), z1},{poly2D[2],getPhongColor(p3,N3,scene, mat), z2},1);
         }
         i++;
     }
     update();
 }
+
 
 
 
@@ -910,4 +898,55 @@ void ViewerWidget::ZPixel(int x, int y, double z, QColor color){
         zBuffer[x][y] = z;
         setPixel(x,y, color);
     }
+}
+QColor ViewerWidget::getPhongColor(const Vertex3D& P, const Vertex3D& N, const Scene& scene, const Material& mat) {
+    // vektory
+    Vertex3D L = (scene.lightPos - P);
+    Vertex3D::normalize(L);
+
+    Vertex3D V = (scene.cameraPos - P);
+    Vertex3D::normalize(V);
+
+    // difuz
+    double NL = std::max(0.0, L | N);
+
+    // reflect
+    Vertex3D R = N * 2.0 * NL - L;
+    Vertex3D::normalize(R);
+
+    // mozem skusit nasobit na 10
+    double specular = std::pow(std::max(0.0, V | R), mat.shininess);
+
+    // channels I = Ia + Id + Is
+    int r = qBound(0, static_cast<int>(mat.amb[0] * scene.Amb[0] + mat.dif[0] * NL * scene.lightColor[0] + mat.ref[0] * specular * scene.lightColor[0]), 255);
+    int g = qBound(0, static_cast<int>(mat.amb[1] * scene.Amb[1] + mat.dif[1] * NL * scene.lightColor[1] + mat.ref[1] * specular * scene.lightColor[1]), 255);
+    int b = qBound(0, static_cast<int>(mat.amb[2] * scene.Amb[2] + mat.dif[2] * NL * scene.lightColor[2] + mat.ref[2] * specular * scene.lightColor[2]), 255);
+
+    return QColor::fromRgb(r, g, b);
+}
+
+double ViewerWidget::getInterpolatedZ(int x, int y, Vertex t0, Vertex t1, Vertex t2) {
+    //plocha 2S
+    double S2 = static_cast<double>((t1.pos.y() - t2.pos.y()) * (t0.pos.x() - t2.pos.x()) +
+                                     (t2.pos.x() - t1.pos.x()) * (t0.pos.y() - t2.pos.y()));
+
+    //if (std::abs(S2) < 1e-6) return t0.z; // Запобігаємо діленню на 0
+
+    // Bari vahy
+    double w0 = ((t1.pos.y() - t2.pos.y()) * (x - t2.pos.x()) +
+                 (t2.pos.x() - t1.pos.x()) * (y - t2.pos.y())) / S2;
+
+    double w1 = ((t2.pos.y() - t0.pos.y()) * (x - t2.pos.x()) +
+                 (t0.pos.x() - t2.pos.x()) * (y - t2.pos.y())) / S2;
+//dobrý den Vázený pan kollar ako sa mate? Som v dobrom zdravi a Vy ste?
+    // teraz sa snazim pochopit ako funguje pocitacova grafika
+    //dovidenia majte sa, pekný deň
+
+
+
+    //teraz hodina noci tak preto.
+    double w2 = 1.0 - w0 - w1;
+
+    // zetova suradnica
+    return w0 * t0.z + w1 * t1.z + w2 * t2.z;
 }

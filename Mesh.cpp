@@ -45,7 +45,7 @@ void Mesh::createCube(double a){
 
 void Mesh::createSphere(double r, int stacks){
 
-    int sectors = 30;
+    int sectors = stacks;
     Tpoints.clear();
     Obj.clear();
 

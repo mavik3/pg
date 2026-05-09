@@ -5,6 +5,7 @@
 struct Vertex{
     QPoint pos;
     QColor color;
+    double z;
 };
 
 
@@ -123,11 +124,11 @@ public:
     void setFillEnabled(bool enabled) { fillEnabled = enabled; }
     void setFillType(int type) { currentFillType = type; }
 
-    void fillTriangle(Vertex t0, Vertex t1, Vertex t2, double z, int fillType);
+    void fillTriangle(Vertex t0, Vertex t1, Vertex t2, int fillType);
     void fillButtomTriangle(Vertex t0, Vertex t1, Vertex t2);
-    void fillTrianglePart(int y1, int y2, double x1, double x2, double z, double w1, double w2, int fillType);
-    void fillBottomTriangle(Vertex t0, Vertex t1, Vertex t2, double z, int fillType);
-    void fillTopTriangle(Vertex t0, Vertex t1, Vertex t2, double z, int fillType);
+    void fillTrianglePart(int y1, int y2, double x1, double x2, double w1, double w2, int fillType);
+    void fillBottomTriangle(Vertex t0, Vertex t1, Vertex t2, int fillType);
+    void fillTopTriangle(Vertex t0, Vertex t1, Vertex t2, int fillType);
 
     QColor getNearestColor(int x, int y, Vertex t0, Vertex t1, Vertex t2);
     QColor getBarycentricColor(int x, int y, Vertex t0, Vertex t1, Vertex t2);
@@ -140,6 +141,12 @@ public:
     QVector<QVector<double>>& getZBuffer() {return zBuffer;}
     void setZBuffer(QVector<QVector<double>> zbuffer){zBuffer = zbuffer;}
     void ZPixel(int x, int y, double z, QColor color);
+
+
+
+    QColor getPhongColor(const Vertex3D& P, const Vertex3D& N, const Scene& scene, const Material& mat);
+
+    double getInterpolatedZ(int x, int y, Vertex t0, Vertex t1, Vertex t2);
 
     //QColor neir(Scene scene, Material mat);
 

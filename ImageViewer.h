@@ -27,7 +27,7 @@ private:
     QColor colorT2;
 
     Mesh Object;
-
+    //Scene sxene = {};
     bool circleInProgress = false;
 
 

@@ -374,7 +374,11 @@
             </widget>
            </item>
            <item>
-            <widget class="QSpinBox" name="spinStacks"/>
+            <widget class="QSpinBox" name="spinStacks">
+             <property name="maximum">
+              <number>200</number>
+             </property>
+            </widget>
            </item>
           </layout>
          </item>
@@ -425,6 +429,9 @@
            </item>
            <item>
             <widget class="QSpinBox" name="SpinDistance">
+             <property name="minimum">
+              <number>-1000</number>
+             </property>
              <property name="maximum">
               <number>1000</number>
              </property>
@@ -482,7 +489,12 @@
            </item>
            <item>
             <property name="text">
-             <string>light</string>
+             <string>Flat shading</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Gouraund shading</string>
             </property>
            </item>
           </widget>
