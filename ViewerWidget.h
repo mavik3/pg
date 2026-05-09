@@ -37,7 +37,15 @@ private:
     bool CircleF = false;
     Mesh Object;
 
+    Scene scene = {};
+    Material mat = {};
+
     QVector<QVector<double>> zBuffer;
+
+    //void setVectorLight(const QVector<Triangle>&);
+
+    //предпокладаю же мусім уробіть іну функцію ако циклус мусі ість по кождом пікселі ако сканлайн але іні
+    QVector3D color;
 
 
 public:
@@ -57,7 +65,7 @@ public:
 	bool isInside(int x, int y);//do vnutra
 
 	//Draw functions
-	void drawLine(QPoint start, QPoint end, QColor color, int algType = 0);
+    void drawLine(QPoint start, QPoint end, double z, QColor color, int algType = 0);
 
 	//Get/Set functions
 	uchar* getData() { return data; }
@@ -69,8 +77,8 @@ public:
     void clear();
 
 	//Algorithms
-	void drawLineDDA(QPoint start, QPoint end, QColor color);
-	void drawLineBresenham(QPoint start, QPoint end, QColor color);
+    void drawLineDDA(QPoint start, QPoint end, double z, QColor color);
+    void drawLineBresenham(QPoint start, QPoint end, double z, QColor color);
     void drawLineCircle(QPoint center, QPoint radius, QColor color);
     void drawCirclePoints(int xc, int yc, int x, int y, QColor color);
     void drawPolygon(const QVector<QPoint>& pts, QColor color, int algLine, bool closed = true);
@@ -115,11 +123,11 @@ public:
     void setFillEnabled(bool enabled) { fillEnabled = enabled; }
     void setFillType(int type) { currentFillType = type; }
 
-    void fillTriangle(Vertex t0, Vertex t1, Vertex t2, int fillType);
+    void fillTriangle(Vertex t0, Vertex t1, Vertex t2, double z, int fillType);
     void fillButtomTriangle(Vertex t0, Vertex t1, Vertex t2);
-    void fillTrianglePart(int y1, int y2, double x1, double x2, double w1, double w2, int fillType);
-    void fillBottomTriangle(Vertex t0, Vertex t1, Vertex t2, int fillType);
-    void fillTopTriangle(Vertex t0, Vertex t1, Vertex t2, int fillType);
+    void fillTrianglePart(int y1, int y2, double x1, double x2, double z, double w1, double w2, int fillType);
+    void fillBottomTriangle(Vertex t0, Vertex t1, Vertex t2, double z, int fillType);
+    void fillTopTriangle(Vertex t0, Vertex t1, Vertex t2, double z, int fillType);
 
     QColor getNearestColor(int x, int y, Vertex t0, Vertex t1, Vertex t2);
     QColor getBarycentricColor(int x, int y, Vertex t0, Vertex t1, Vertex t2);
@@ -127,13 +135,13 @@ public:
 
     void updateTriangleLogic();
 
-    void Draw3DObject(const QVector<Vertex3D>& points, const QVector<Triangle>& triangles);
+    void Draw3DObject(const QVector<Vertex3D>& points, const QVector<Triangle>& triangles, int TypeAlg, Scene& scene, Material& mat);
 
     QVector<QVector<double>>& getZBuffer() {return zBuffer;}
     void setZBuffer(QVector<QVector<double>> zbuffer){zBuffer = zbuffer;}
     void ZPixel(int x, int y, double z, QColor color);
 
-    void fill3D(QVector<Vertex3D>& points);
+    //QColor neir(Scene scene, Material mat);
 
 
 public slots:

@@ -8,14 +8,56 @@
 using namespace std;
 struct Vertex3D {
     double x, y, z;
+
+    static void normalize(Vertex3D &v) {
+        double length = sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+        if (length > 0) {
+            v.x /= length;
+            v.y /= length;
+            v.z /= length;
+        }
+    }
+    Vertex3D operator-(const Vertex3D& V) {
+        return { x - V.x, y - V.y, z - V.z };
+    }
+    static Vertex3D plus(const Vertex3D &a, const Vertex3D &b) {
+        return { a.x + b.x, a.y + b.y, a.z + b.z };
+    }
+    Vertex3D operator*(const Vertex3D &b) const {
+        return {
+            y * b.z - z * b.y,
+            z * b.x - x * b.z,
+            x * b.y - y * b.x
+        };
+    }
+    double operator|(const Vertex3D &b) const {
+       return x * b.x + y * b.y + z * b.z;
+    }
+    Vertex3D operator*(const double &c) const {
+        return {x * c, y * c, z * c};
+    }
 };
 struct Triangle {
     int v1, v2, v3;
 };
+struct Material {
+    double dif[3] = {0.8, 0.8, 0.8};
+    double ref[3] = {0.7, 0.7, 0.7};
+    double amb[3] = {0.5, 0.5, 0.1};
+    double shininess = 32.0;
+};
+struct Scene {
+    Vertex3D lightPos = {0, 0, 500};
+    Vertex3D cameraPos = {0, 0, 1000};
+    int lightColor[3] = {255, 125, 150};
+    int Amb[3] = {255, 100, 100};
+};
+
 
 class Mesh {
 private:
     QVector<Vertex3D> VectorNorm;
+    QVector<Vertex3D> VectorLight;
     double Thetta;
     double Phi;
     QVector<Triangle> Obj;
@@ -24,7 +66,7 @@ private:
     QVector<Triangle> t;*/
     void addObject(int v1, int v2, int v3){
         Triangle t;
-        t.v1 = v1;
+        t.v1 = v1;//
         t.v2 = v2;
         t.v3 = v3;
         Obj.push_back(t);
@@ -35,8 +77,6 @@ public:
 
     void setObj(const QVector<Triangle>& t){Obj = t;}
     void setTpoints(const QVector<Vertex3D>& Tp) {Tpoints = Tp;}
-
-    QVector<QColor> colorMesh;
 
     void createCube(double a);
     void createSphere(double r, int floor);

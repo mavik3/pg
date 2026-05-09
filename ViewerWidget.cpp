@@ -124,15 +124,15 @@ bool ViewerWidget::isInside(int x, int y)
 }//перевірка попорядку якщо хоч одна не спилнена то false
 
 //Draw functions
-void ViewerWidget::drawLine(QPoint start, QPoint end, QColor color, int algType)
+void ViewerWidget::drawLine(QPoint start, QPoint end, double z, QColor color, int algType)
 {
 	if (!img || !data) return;
 
     if (algType == 0) {
-		drawLineDDA(start, end, color);
+        drawLineDDA(start, end, z, color);
 	}
     else if (algType == 1){
-		drawLineBresenham(start, end, color);
+        drawLineBresenham(start, end, z, color);
 	}
     else {
         drawLineCircle(start, end, color);
@@ -149,7 +149,7 @@ void ViewerWidget::clear() {
     update();
 }
 
-void ViewerWidget::drawLineDDA(QPoint start, QPoint end, QColor color)
+void ViewerWidget::drawLineDDA(QPoint start, QPoint end, double z, QColor color)
 {
     if (!img || !data) return;
 
@@ -160,21 +160,21 @@ void ViewerWidget::drawLineDDA(QPoint start, QPoint end, QColor color)
     int dyI = y1 - y0;
 
     if (dxI == 0 && dyI == 0) {
-        setPixel(x0, y0, color);
+        ZPixel(x0, y0, z, color);
         return;
     }
 
     if (dxI == 0) {
         int yStep = (y1 >= y0) ? 1 : -1;
         for (int y = y0; y != y1 + yStep; y += yStep)
-            setPixel(x0, y, color);
+            ZPixel(x0, y, z, color);
         return;
     }
 
     if (dyI == 0) {
         int xStep = (x1 >= x0) ? 1 : -1;
         for (int x = x0; x != x1 + xStep; x += xStep)
-            setPixel(x, y0, color);
+            ZPixel(x, y0, z, color);
         return;
     }
 
@@ -191,7 +191,7 @@ void ViewerWidget::drawLineDDA(QPoint start, QPoint end, QColor color)
         while (true) {
             int xi = (int)(x + 0.5);
             int yi = (int)(y + 0.5);
-            setPixel(xi, yi, color);
+            ZPixel(xi, yi, z, color);
 
             if (xi == x1) break;
 
@@ -209,7 +209,7 @@ void ViewerWidget::drawLineDDA(QPoint start, QPoint end, QColor color)
         while (true) {
             int xi = (int)(x + 0.5);
             int yi = (int)(y + 0.5);
-            setPixel(xi, yi, color);
+            ZPixel(xi, yi, z, color);
 
             if (yi == y1) break;
 
@@ -218,7 +218,7 @@ void ViewerWidget::drawLineDDA(QPoint start, QPoint end, QColor color)
         }
     }
 }
-void ViewerWidget::drawLineBresenham(QPoint start, QPoint end, QColor color){
+void ViewerWidget::drawLineBresenham(QPoint start, QPoint end, double z, QColor color){
 
 //pracujeme z jednym oktantom a preto mozem pisat tak (0 <m < 1) || (m > 1)
     int x1 = start.x();
@@ -264,7 +264,7 @@ void ViewerWidget::drawLineBresenham(QPoint start, QPoint end, QColor color){
         int k2 = 2 * (adx - ady);
 
         for (int i = 0; i <= ady; i++) {
-            setPixel(x1, y1, color);
+            ZPixel(x1, y1, z, color);
             y1 += smer_y; // Posun v smere sy
             if (p > 0) {
                 x1 += smer_x; // Posun v smere sx
@@ -311,14 +311,14 @@ void ViewerWidget::drawPolygon(const QVector<QPoint>& pts, QColor color, int alg
     if (pts.size() < 2) return;
 
     for (int i = 0; i < pts.size() - 1; i++) {
-        drawLine(pts[i], pts[i+1], color, algType);
+        drawLine(pts[i], pts[i+1],0, color, algType);
     }
 
     if (closed && pts.size() >= 3) {
-        drawLine(pts.last(), pts.first(), color, algType); // Замикаємо полігон правильно
+        drawLine(pts.last(), pts.first(),0, color, algType); // Замикаємо полігон правильно
         }
     if (algType == 2){
-            drawLine(pts.last(), pts.first(),color,algType);
+            drawLine(pts.last(), pts.first(),0,color,algType);
         closed = getCircleF();
     }
 
@@ -337,7 +337,7 @@ void ViewerWidget::redrawPolygon(const QColor& color, int algType)
             for (int i = 0; i < originalPoints.size() - 1; i++) {
                 QVector<QPoint> clipped = calculateCyrusBeckLine(originalPoints[i], originalPoints[i+1]);
                 if (clipped.size() == 2) {
-                    drawLine(clipped[0], clipped[1], color, algType);
+                    drawLine(clipped[0], clipped[1],0, color, algType);
                 }
             }
         }
@@ -352,7 +352,7 @@ void ViewerWidget::redrawPolygon(const QColor& color, int algType)
             // Якщо це рівно 3 точки - малюємо градієнт через поділ
             if (originalPoints.size() == 3) {
                 updateTriangleLogic(); // Оновлюємо координати base_t
-                fillTriangle(base_t0, base_t1, base_t2, currentFillType);
+                fillTriangle(base_t0, base_t1, base_t2,0, currentFillType);
             }
             // Якщо це багатокутник - заливаємо через Scan_line
             else if (originalPoints.size() > 3) {
@@ -363,7 +363,7 @@ void ViewerWidget::redrawPolygon(const QColor& color, int algType)
 
         // Малюємо контур ПОВЕРХ заливки
         for (int i = 0; i < clipped.size(); i++) {
-            drawLine(clipped[i], clipped[(i + 1) % clipped.size()], color, algType);
+            drawLine(clipped[i], clipped[(i + 1) % clipped.size()],0, color, algType);
         }
     }
     update();
@@ -618,7 +618,7 @@ void ViewerWidget::Scan_line(QVector<QPoint>& points, double z, const QColor& co
         }
     }
 
-void ViewerWidget::fillTriangle(Vertex t0, Vertex t1, Vertex t2, int fillType) {
+void ViewerWidget::fillTriangle(Vertex t0, Vertex t1, Vertex t2, double z, int fillType) {
     base_t0 = t0;
     base_t1 = t1;
     base_t2 = t2;
@@ -640,11 +640,11 @@ void ViewerWidget::fillTriangle(Vertex t0, Vertex t1, Vertex t2, int fillType) {
 
     if (t0.pos.y() == t1.pos.y()) {
         //pripad: vodorovna horna hrana
-        fillBottomTriangle(t0, t1, t2, fillType);
+        fillBottomTriangle(t0, t1, t2, z, fillType);
     }
     else if (t1.pos.y() == t2.pos.y()) {
         //pripad: vodorovna spodna hrana
-        fillTopTriangle(t0, t1, t2, fillType);
+        fillTopTriangle(t0, t1, t2, z, fillType);
     }
     else {
         QPoint pos_p;
@@ -652,17 +652,17 @@ void ViewerWidget::fillTriangle(Vertex t0, Vertex t1, Vertex t2, int fillType) {
         Vertex p = {pos_p, t1.color};
 
         if (t1.pos.x() < p.pos.x()) {
-            fillTopTriangle(t0, t1, p, fillType);
-            fillBottomTriangle(t1, p, t2, fillType);
+            fillTopTriangle(t0, t1, p, z, fillType);
+            fillBottomTriangle(t1, p, t2, z, fillType);
         }
         else {
-            fillTopTriangle(t0, p, t1, fillType);
-            fillBottomTriangle(p, t1, t2, fillType);
+            fillTopTriangle(t0, p, t1, z, fillType);
+            fillBottomTriangle(p, t1, t2, z, fillType);
         }
     }
 }
 
-void ViewerWidget::fillTrianglePart(int y1, int y2, double x1, double x2, double w1, double w2, int fillType)
+void ViewerWidget::fillTrianglePart(int y1, int y2, double x1, double x2, double z, double w1, double w2, int fillType)
 {
     for (int y = y1; y <= y2; y++) {
 
@@ -670,7 +670,7 @@ void ViewerWidget::fillTrianglePart(int y1, int y2, double x1, double x2, double
         int endX = (int)std::floor(std::max(x1, x2));
 
         for (int x = startX; x <= endX; x++) {
-            setPixel(x, y, getColor(x, y, fillType));
+            ZPixel(x, y, z, getColor(x, y, fillType));
         }
         x1 += w1;
         x2 += w2;
@@ -678,7 +678,7 @@ void ViewerWidget::fillTrianglePart(int y1, int y2, double x1, double x2, double
 }
 
 
-void ViewerWidget::fillBottomTriangle(Vertex t0, Vertex t1, Vertex t2, int fillType)
+void ViewerWidget::fillBottomTriangle(Vertex t0, Vertex t1, Vertex t2, double z, int fillType)
 {
     double w1 = (double)(t2.pos.x() - t0.pos.x()) / (t2.pos.y() - t0.pos.y());
     double w2 = (double)(t2.pos.x() - t1.pos.x()) / (t2.pos.y() - t1.pos.y());
@@ -689,10 +689,10 @@ void ViewerWidget::fillBottomTriangle(Vertex t0, Vertex t1, Vertex t2, int fillT
     int y1 = t0.pos.y();
     int y2 = t2.pos.y();
 
-    fillTrianglePart(y1, y2, x1, x2, w1, w2, fillType);
+    fillTrianglePart(y1, y2, x1, x2, z, w1, w2, fillType);
 }
 
-void ViewerWidget::fillTopTriangle(Vertex t0, Vertex t1, Vertex t2, int fillType)
+void ViewerWidget::fillTopTriangle(Vertex t0, Vertex t1, Vertex t2, double z, int fillType)
 {
     //hrany idu zhora nadol: e1 spaja t0-t1, e2 spaja t0-t2
     double w1 = (double)(t1.pos.x() - t0.pos.x()) / (t1.pos.y() - t0.pos.y());
@@ -705,7 +705,7 @@ void ViewerWidget::fillTopTriangle(Vertex t0, Vertex t1, Vertex t2, int fillType
     int y1 = t0.pos.y();
     int y2 = t1.pos.y();
 
-    fillTrianglePart(y1, y2, x1, x2, w1, w2, fillType);
+    fillTrianglePart(y1, y2, x1, x2, z, w1, w2, fillType);
 }
 
 QColor ViewerWidget::getNearestColor(int x, int y, Vertex t0, Vertex t1, Vertex t2)
@@ -797,8 +797,8 @@ void ViewerWidget::paintEvent(QPaintEvent* event)//головна функція
     QRect area = event->rect();// прямокутник, оптимізація  "пошкодженої частини", не завжди треба перемальовувати весь
 	painter.drawImage(area, *img, area);//vykresli novy obrazok
 }
-//treba zmenit naspat QPoint na Verte3D
-void ViewerWidget::Draw3DObject(const QVector<Vertex3D>& points, const QVector<Triangle>& triangles){
+//treba zmenit naspat QPoint na Verte3D ----
+void ViewerWidget::Draw3DObject(const QVector<Vertex3D>& points, const QVector<Triangle>& triangles, int TypeAlg, Scene& scene, Material& mat){
     if (points.isEmpty()) return;
     zBuffer.clear();
     for (int x = 0; x < img->width(); x++){
@@ -809,65 +809,103 @@ void ViewerWidget::Draw3DObject(const QVector<Vertex3D>& points, const QVector<T
         zBuffer.push_back(column);
     }
     img->fill(Qt::white);
-
-    int centerX = img->width() / 2;
+       int centerX = img->width() / 2;
     int centerY = img->height() / 2;
-
+    int i = 0;
     for(const auto& tri : triangles){
-        int i = 0;
         QVector<QPoint> poly2D;
+        QVector<Vertex> vertex2D;
         int indices[3] = {tri.v1, tri.v2, tri.v3};
-        double z0 = points[tri.v1].z;
-        double z1 = points[tri.v2].z;
-        double z2 = points[tri.v3].z;
+        Vertex3D p1, p2, p3;
+        p1 = points[tri.v1];
+        p2 = points[tri.v2];
+        p3 = points[tri.v3];
+        double z0 = p1.z;
+        double z1 = p2.z;
+        double z2 = p3.z;
         double zABS = (z0 + z1 + z2) / 3.0;
+
+        Vertex3D e1 = p2 - p1;
+        Vertex3D e2 = p3 - p1;
+
+        //toto nasa normal trojugolnika
+        Vertex3D N = e1 * e2;
+        double length = sqrt(N.x*N.x + N.y*N.y + N.z*N.z);
+        if (length > 0) {N.x /= length; N.y /= length; N.z /= length;}
+        //bod
+        Vertex3D P = {(p1.x + p2.x + p3.x)/3.0, (p1.y+p2.y+p3.y)/3.0, (p1.z+p2.z+p3.z)/3.0};
+        //vektor light
+        Vertex3D L = (scene.lightPos - P);
+        L.normalize(L);
+
+        //Vertex3D L = {0, 0, 1};
+        //vektor camera
+        Vertex3D V = (scene.cameraPos - P);
+        V.normalize(V);
+        //intesivita
+        double NL = std::max(0.0, L | N);
+
+
+        Vertex3D R = N * 2.0 * NL - L;
+        R.normalize(R);
+
+        double specular = std::pow(std::max(0.0, V | R), mat.shininess * 10);
+
+        int r = qBound(0, static_cast<int>(mat.amb[0] * scene.Amb[0] + mat.dif[0] * NL * scene.lightColor[0] + mat.ref[0] * specular * scene.lightColor[0]), 255);
+        int g = qBound(0, static_cast<int>(mat.amb[1] * scene.Amb[1] + mat.dif[1] * NL * scene.lightColor[1] + mat.ref[1] * specular * scene.lightColor[1]), 255);
+        int b = qBound(0, static_cast<int>(mat.amb[2] * scene.Amb[2] + mat.dif[2] * NL * scene.lightColor[2] + mat.ref[2] * specular * scene.lightColor[2]), 255);
+
+        QColor faceColor = QColor::fromRgb(r, g, b);
 
         for (int i = 0; i < 3; i++){
             Vertex3D v = points[indices[i]];
-            int screenX = static_cast<int>(centerX + v.x);
-            int screenY = static_cast<int>(centerY + v.y);
-
-            poly2D.append(QPoint(screenX,screenY));
-        }
-        if (fillEnabled) {
-            QColor color = Object.colorMesh[i];
+        int screenX = static_cast<int>(centerX + v.x);
+        int screenY = static_cast<int>(centerY + v.y);
+                        poly2D.append(QPoint(screenX,screenY));
+                    }
+        if (TypeAlg == 1) {
             if (poly2D.isEmpty()) return;
-            Scan_line(poly2D, zABS, Qt::blue);
+        Scan_line(poly2D, zABS, Qt::blue);
+        }
+        else if (TypeAlg == 2){
+            QColor faceColor;
+            // Якщо вектор порожній, генеруємо колір за індексом, щоб не падати
+            faceColor = QColor::fromHsv((i * 40) % 360, 200, 255);
+                        if (poly2D.isEmpty()) return;
+            Scan_line(poly2D, zABS, faceColor);
+        }
+        else if (TypeAlg == 3){
+            Scan_line(poly2D, zABS, faceColor);
         }
         for (int i = 0; i < 3; i++) {
-            drawLine(poly2D[i], poly2D[(i + 1) % 3], Qt::black, 1);
+            drawLine(poly2D[i], poly2D[(i + 1) % 3], zABS + 0.1, Qt::black, 0);
         }
-
-            // Твої структури Vertex t1, t2, t3 мають отримати координати
-            // з нашого poly2D, де індекси ЗАВЖДИ 0, 1 та 2
-            /*Vertex t1 = { poly2D[0], Qt::red};
-            Vertex t2 = { poly2D[1], Qt::blue};
-            Vertex t3 = { poly2D[2], Qt::green};*/
         i++;
     }
     update();
 }
-        /*if (points.isEmpty()) return;
-    img->fill(Qt::white);
-    int centerX = img->width() / 2;
-    int centerY = img->height() / 2;
 
-    for (int i = 0; i < triangles.size(); i++){
-        QPoint Tpoint[3];
-        for (int j = 0; j < 3; j++){
-            Tpoint[j]  = {int(points[triangles[i].v1].x + centerX), int(points[triangles[i].v1].y + centerY)};
-            //drawLine((i + 1) % 3, Qt::black, 1);
-        }
-        for (int j = 0; j < 3; j++){
-            drawLine(Tpoint[j], Tpoint[(j +1) % 3], Qt::black, 1);
-        }
-    }
-    update();
-}*/
+
+
+
+//musim navrhnut vsetky premenne ktore musim zadat z UI nahodou tak pochopim co robit dalej vsetky I rd rs rs
+
+//vektory sveta budem pocitat asi uz priamo lebo musi ist cyklus
+        //alebo bude funkcia ako s neir alebo bairis este moze byt ze nieco zmenit na zacatku, mozu byt problem s
+//smerom vektorov normaly ale dufam ze uz vsetko v poriadku
+
+
+//teraz vsetko ale kludne moze nieco spomenim, moze byt ze perepisem niejaku funkciu alebo vyhodim odpad ktory mam v kode
+
+
+//predpokladam ze sfera musi byt biela a uz svetlo bude menit farbu tak potom mozno vyhodit tie random color
+
+//QColor ViewerWidget::neir(Scene scene, Material material){}
+
 void ViewerWidget::ZPixel(int x, int y, double z, QColor color){
-    if(x < 0 || x > img->width() || y < 0 || y > img->height())return;
-    //if(zBuffer.isEmpty()){
-      //  setPixel(x,y,color); return;};
+    if(x < 0 || x >= img->width() || y < 0 || y >= img->height())return;
+    if(zBuffer.isEmpty()){
+        setPixel(x,y,color); return;};
     if (z > zBuffer[x][y]){
         zBuffer[x][y] = z;
         setPixel(x,y, color);

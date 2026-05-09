@@ -19,26 +19,28 @@ void Mesh::createCube(double a){
         }
     }
 
-    addObject(0,1,3);
-    addObject(0,2,3);
+    addObject(0, 2, 3);
+    addObject(0, 3, 1);
 
-    addObject(0,1,5);
-    addObject(0,4,5);
+    // Задня грань (Z = +half)
+    addObject(4, 5, 7);
+    addObject(4, 7, 6);
 
-    addObject(0,2,6);
-    addObject(0,4,6);
+    // Ліва грань (X = -half)
+    addObject(0, 4, 6);
+    addObject(0, 6, 2);
 
-    addObject(7,3,1);
-    addObject(7,5,1);
+    // Права грань (X = +half)
+    addObject(1, 3, 7);
+    addObject(1, 7, 5);
 
-    addObject(7,3,2);
-    addObject(7,6,2);
+    // Верхня грань (Y = +half)
+    addObject(2, 6, 7);
+    addObject(2, 7, 3);
 
-    addObject(7,5,4);
-    addObject(7,6,4);
-    for (int i = 0; i < Obj.size(); i++){
-        colorMesh.push_back(QColor(QRandomGenerator::global()->bounded(256),QRandomGenerator::global()->bounded(256),QRandomGenerator::global()->bounded(256)));
-    }
+    // Нижня грань (Y = -half)
+    addObject(0, 1, 5);
+    addObject(0, 5, 4);
 }
 
 void Mesh::createSphere(double r, int stacks){

@@ -1,5 +1,6 @@
- #include "ImageViewer.h"
+#include "ImageViewer.h"
 #include <iostream>
+#include <QValidator>
 //QObject
 //QEvent nase situaci
 //pos()- position mouse
@@ -31,6 +32,37 @@ ImageViewer::ImageViewer(QWidget* parent)
     colorT0 = Qt::red;
     colorT1 = Qt::green;
     colorT2 = Qt::blue;
+
+
+    /*QDoubleValidator *valDouble = new QDoubleValidator(0.0, 1.0, 100, this);
+    valDouble->setNotation(QDoubleValidator::StandardNotation);
+    valDouble->setLocale(QLocale::C);
+
+    // color RGB
+    QIntValidator *valRGB = new QIntValidator(0, 255, this);
+
+    // 3. Light dlzka
+    QIntValidator *valLarge = new QIntValidator(0, 2000, this);
+    //vsetky tie lineEdit
+    QList<QLineEdit*> allFields = this->findChildren<QLineEdit*>();
+
+    for (QLineEdit* le : allFields) {
+        QString name = le->objectName();
+
+        if (name.startsWith("pom")) { // coeff 0.0 - 1.0
+            le->setValidator(valDouble);
+            le->setPlaceholderText("0.00");
+        }
+        else if (name.startsWith("color")) { // rgb  0 - 255
+            le->setValidator(valRGB);
+            le->setPlaceholderText("255");
+        }
+        else if (name.startsWith("light")) { // dlzka 0 - 2000
+            le->setValidator(valLarge);
+            le->setPlaceholderText("1000");
+        }
+    }*/
+
 }
 
 // Event filters
@@ -376,16 +408,43 @@ void ImageViewer::on_pbSphere_clicked(){
 void ImageViewer::renderScene(){
 
     Object.setVectorNorm(ui->Slider_Thetta->value(), ui->Slider_Phi->value());
+    Scene scene;
+    Material mat;
+    scene.lightPos.x = ui->lightX->value();
+    scene.lightPos.y = ui->lightY->value();
+    scene.lightPos.z = ui->lightZ->value();
+    scene.cameraPos = {0,0,1000};
+
+    scene.lightColor[0] = ui->colorR->value();
+    scene.lightColor[1] = ui->colorG->value();
+    scene.lightColor[2] = ui->colorB->value();
+
+    scene.Amb[0] = ui->AmbR->value();
+    scene.Amb[1] = ui->AmbG->value();
+    scene.Amb[2] = ui->AmbB->value();
+
+    mat.dif[0] = ui->pom_difR->value();
+    mat.dif[1] = ui->pom_difG->value();
+    mat.dif[2] = ui->pom_difB->value();
+
+    mat.ref[0] = ui->pom_refR->value();
+    mat.ref[1] = ui->pom_refG->value();
+    mat.ref[2] = ui->pom_refB->value();
+    mat.shininess = ui->shininess->value();
+
+    mat.amb[0] = ui->pom_ambR->value();
+    mat.amb[1] = ui->pom_ambG->value();
+    mat.amb[2] = ui->pom_ambB->value();
 
     QVector<Vertex3D> Mpoints = Object.mutation(Object.getVectorNorm());
     QVector<Vertex3D> OrigPoints = Object.getTpoints();
     if(ui->comboBoxProjection->currentIndex() == 1){
         QVector<Vertex3D> P = Object.parallelProj(Mpoints);
-        vW->Draw3DObject(P, Object.getObj());
+        vW->Draw3DObject(P, Object.getObj(),ui->comboScanLine3D->currentIndex(),scene, mat);
     }
     else{
-        QVector<Vertex3D> P =Object.perspectiveProj(Mpoints, ui->SpinDistance->value());
-        vW->Draw3DObject(P, Object.getObj());
+        QVector<Vertex3D> P = Object.perspectiveProj(Mpoints, ui->SpinDistance->value());
+        vW->Draw3DObject(P, Object.getObj(),ui->comboScanLine3D->currentIndex(), scene, mat);
     }
 }
 
@@ -402,5 +461,4 @@ void ImageViewer::on_Slider_Phi_valueChanged(int value){
 void ImageViewer::on_SpinDistance_valueChanged(double d) {
     renderScene();
 }
-
 
