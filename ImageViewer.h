@@ -27,7 +27,7 @@ private:
     QColor colorT2;
 
     Mesh Object;
-    //Scene sxene = {};
+    Mesh Array;
     bool circleInProgress = false;
 
 
@@ -49,7 +49,9 @@ private:
 	//Image functions
 	bool openImage(QString filename);
 	bool saveImage(QString filename);
+    ObjectType lastSelectedObject;
 
+    //void MouseMove(ViewerWidget* w, QEvent* event,);
 
 private slots:
 	void on_actionOpen_triggered();
@@ -78,6 +80,10 @@ private slots:
     void on_Slider_Thetta_valueChanged(int value);
     void on_Slider_Phi_valueChanged(int value);
 
-    void renderScene();
     void on_SpinDistance_valueChanged(double d);
+
+    void on_pbArray_clicked();
+
+    void renderScene();
+
 };

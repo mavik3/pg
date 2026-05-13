@@ -1,14 +1,7 @@
 #include "ImageViewer.h"
 #include <iostream>
-//#include <QValidator>
-//QObject
-//QEvent nase situaci
-//pos()- position mouse
-//QPoint - int 
-//QPointf - double
-//
 
-//pocas vypoctu moze byt ne celeciselna hodnota preto potom zaokruhlim do int
+
 ImageViewer::ImageViewer(QWidget* parent)
 	: QMainWindow(parent), ui(new Ui::ImageViewerClass)
 {
@@ -32,37 +25,6 @@ ImageViewer::ImageViewer(QWidget* parent)
     colorT0 = Qt::red;
     colorT1 = Qt::green;
     colorT2 = Qt::blue;
-
-    //sxene.lightColor[1] = ui->colorB;
-    /*QDoubleValidator *valDouble = new QDoubleValidator(0.0, 1.0, 100, this);
-    valDouble->setNotation(QDoubleValidator::StandardNotation);
-    valDouble->setLocale(QLocale::C);
-
-    // color RGB
-    QIntValidator *valRGB = new QIntValidator(0, 255, this);
-
-    // 3. Light dlzka
-    QIntValidator *valLarge = new QIntValidator(0, 2000, this);
-    //vsetky tie lineEdit
-    QList<QLineEdit*> allFields = this->findChildren<QLineEdit*>();
-
-    for (QLineEdit* le : allFields) {
-        QString name = le->objectName();
-
-        if (name.startsWith("pom")) { // coeff 0.0 - 1.0
-            le->setValidator(valDouble);
-            le->setPlaceholderText("0.00");
-        }
-        else if (name.startsWith("color")) { // rgb  0 - 255
-            le->setValidator(valRGB);
-            le->setPlaceholderText("255");
-        }
-        else if (name.startsWith("light")) { // dlzka 0 - 2000
-            le->setValidator(valLarge);
-            le->setPlaceholderText("1000");
-        }
-    }*/
-
 }
 
 
@@ -74,7 +36,6 @@ bool ImageViewer::eventFilter(QObject* obj, QEvent* event)
 	}
 	return QMainWindow::eventFilter(obj, event);
 }
-//QObject->QWidget->ViewerWidget
 //ViewerWidget Events
 bool ImageViewer::ViewerWidgetEventFilter(QObject* obj, QEvent* event)
 {
@@ -102,7 +63,6 @@ bool ImageViewer::ViewerWidgetEventFilter(QObject* obj, QEvent* event)
 	else if (event->type() == QEvent::Wheel) {
 		ViewerWidgetWheel(w, event);
 	}
-
 	return QObject::eventFilter(obj, event);
 }
 void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
@@ -110,17 +70,14 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
     QMouseEvent* e = static_cast<QMouseEvent*>(event);
 
     if (ui->CircleLL->isChecked()) {
-        if (vW->getOriginalPoints().size() == 2) {
+
+        if (vW->getOriginalPoints().size() > 1)
             w->getOriginalPoints().clear(); // Починаємо нове коло, якщо вже було два кліки
-        }
 
         vW->getOriginalPoints().push_back(e->pos());
 
-        if (vW->getOriginalPoints().size() == 2) {
-            vW->setPolygonFinished(true); // Коло готове після 2-ї точки
-        }
     }
-    if (ui->Polygon->isChecked()) {
+    else if (ui->Polygon->isChecked() || !ui->CircleLL->isChecked()) {
         if (e->button() == Qt::LeftButton) {
             if (w->getPolygonFinished()) {
                 w->getOriginalPoints().clear(); // Очистить і originalPoints, і екран
@@ -143,9 +100,6 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 
 }
 
-
-
-
 void ImageViewer::ViewerWidgetMouseButtonRelease(ViewerWidget* w, QEvent* event) {
     QMouseEvent* e = static_cast<QMouseEvent*>(event);
     if (e->button() == Qt::LeftButton) {
@@ -167,6 +121,7 @@ void ImageViewer::ViewerWidgetMouseMove(ViewerWidget* w, QEvent* event) {
 
         // Перемальовуємо з автоматичним відсіканням
         w->redrawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex());
+
     }
 }
 
@@ -399,16 +354,20 @@ void ImageViewer::on_actionSave_3D_triggered()
 }
 
 void ImageViewer::on_pbCube_clicked(){
+    lastSelectedObject = CUBE;
     Object.createCube(ui->spinSize->value());
     renderScene();
 }
 void ImageViewer::on_pbSphere_clicked(){
+    lastSelectedObject = SPHERE;
     Object.createSphere(ui->spinSize->value(), ui->spinStacks->value());
     renderScene();
 }
 void ImageViewer::renderScene(){
 
     Object.setVectorNorm(ui->Slider_Thetta->value(), ui->Slider_Phi->value());
+    Array.setVectorNorm(0,0);// uhol ktory zostane aj na dalej
+
     Scene scene;
     Material mat;
     scene.lightPos.x = ui->lightX->value();
@@ -438,16 +397,22 @@ void ImageViewer::renderScene(){
     mat.amb[0] = ui->pom_ambR->value();
     mat.amb[1] = ui->pom_ambG->value();
     mat.amb[2] = ui->pom_ambB->value();
-
-    QVector<Vertex3D> Mpoints = Object.mutation(Object.getVectorNorm());
+    //Object.setMaterial(mat);
+    //Object.set
+    QVector<Vertex3D> Mpoints = Object.mutation(Object.getVectorNorm(),Object.getTpoints());
     QVector<Vertex3D> OrigPoints = Object.getTpoints();
+    QVector<Vertex3D> MpointsA = Array.mutation(Array.getVectorNorm(),Array.getSpoints());
+    QVector<Vertex3D> OrigPointsA = Array.getSpoints();
     if(ui->comboBoxProjection->currentIndex() == 1){
         QVector<Vertex3D> P = Object.parallelProj(Mpoints);
-        vW->Draw3DObject(P, Object.getObj(),ui->comboScanLine3D->currentIndex(),scene, mat);
+        QVector<Vertex3D> SP = Object.parallelProj(MpointsA);
+        vW->Draw3DObject(P, Object.getObj(), SP,Array.getArray(),ui->comboScanLine3D->currentIndex(),scene, mat,lastSelectedObject,ui->comboTriangle->currentIndex());
     }
     else{
+
         QVector<Vertex3D> P = Object.perspectiveProj(Mpoints, ui->SpinDistance->value());
-        vW->Draw3DObject(P, Object.getObj(),ui->comboScanLine3D->currentIndex(), scene, mat);
+        QVector<Vertex3D> SP = Object.perspectiveProj(MpointsA, ui->SpinDistance->value());
+        vW->Draw3DObject(P, Object.getObj(), SP, Array.getArray(), ui->comboScanLine3D->currentIndex(), scene, mat,lastSelectedObject,ui->comboTriangle->currentIndex());
     }
 }
 
@@ -463,5 +428,28 @@ void ImageViewer::on_Slider_Phi_valueChanged(int value){
 
 void ImageViewer::on_SpinDistance_valueChanged(double d) {
     renderScene();
+}
+/*void ImageViewer::MouseMove(ViewerWidget* w, QEvent* event) {
+    QMouseEvent* e = static_cast<QMouseEvent*>(event);
+
+    if (ui->pbMove->isChekable()) {
+        QPoint currentPos = e->pos();
+        QPoint lastPos = w->getLastMousePos();
+
+        int dx = currentPos.x() - lastPos.x();
+        int dy = currentPos.y() - lastPos.y();
+
+        // Змінює originalPoints
+        w->setLastMousePos(currentPos);
+
+        // Перемальовуємо з автоматичним відсіканням
+        w->Draw3DObject(w->move(dx,dy, Object.getTpoints()),Object.getObj(),ui->comboScanLine3D->currentIndex(),scene, mat,lastSelectedObject,ui->comboTriangle->currentIndex());
+
+    }
+}*/
+void ImageViewer::on_pbArray_clicked(){
+    Array.createArray(300,200,20);
+    Array.saveToVTK("/home/mavik3/Documents/buba.vtk");
+
 }
 

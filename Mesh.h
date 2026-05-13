@@ -58,37 +58,42 @@ private:
     double Thetta;
     double Phi;
     QVector<Triangle> Obj;
+    QVector<Triangle> Array;
     QVector<Vertex3D> Tpoints;
-    /*QVector<Vertex3D> p;
-    QVector<Triangle> t;*/
-    void addObject(int v1, int v2, int v3){
+    QVector<Vertex3D> Spoints;
+    void addObject(int v1, int v2, int v3,QVector<Triangle>& tri){
         Triangle t;
         t.v1 = v1;//
         t.v2 = v2;
         t.v3 = v3;
-        Obj.push_back(t);
+        tri.push_back(t);
     }
+
 public:
     QVector<Triangle> getObj() const {return Obj;}
+    QVector<Triangle> getArray() const {return Array;}
     QVector<Vertex3D> getTpoints() const {return Tpoints;}
+    QVector<Vertex3D> getSpoints() const {return Spoints;}
 
     void setObj(const QVector<Triangle>& t){Obj = t;}
+    void setArray(const QVector<Triangle>& t){Array = t;}
     void setTpoints(const QVector<Vertex3D>& Tp) {Tpoints = Tp;}
-
+    void setSpoints(const QVector<Vertex3D>& Sp) {Spoints = Sp;}
     void createCube(double a);
     void createSphere(double r, int floor);
+    void createArray(double a, int z, int kus);
 
     bool loadFromVTK(QString filename);
     bool saveToVTK(QString filename);
     
-    void setThetta(int thetta){Thetta = thetta * M_PI / 180;}
-    void setPhi(int phi){Phi = phi * M_PI / 180;;}
+    void setThetta(int thetta){Thetta = thetta;}
+    void setPhi(int phi){Phi = phi;}
     void setVectorNorm(int Thetta, int Phi);
     
     double getThetta() const {return Thetta;}
     double getPhi() const {return Phi;}
     QVector<Vertex3D>& getVectorNorm() {return VectorNorm;}
-    QVector<Vertex3D> mutation(const QVector<Vertex3D>& VectorNorm);
+    QVector<Vertex3D> mutation(const QVector<Vertex3D>& VectorNorm, const QVector<Vertex3D>& point);
 
     QVector<Vertex3D> parallelProj(QVector<Vertex3D>& points);
     QVector<Vertex3D> perspectiveProj(QVector<Vertex3D>& points, int d);

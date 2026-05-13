@@ -307,28 +307,11 @@ void ViewerWidget::drawCirclePoints(int xc, int yc, int x, int y, QColor color)
     setPixel(xc + y, yc - x, color);
     setPixel(xc - y, yc - x, color);
 }
-void ViewerWidget::drawPolygon(const QVector<QPoint>& pts, QColor color, int algType, bool closed) {
-    if (pts.size() < 2) return;
-
-    for (int i = 0; i < pts.size() - 1; i++) {
-        drawLine(pts[i], pts[i+1],0, color, algType);
-    }
-
-    if (closed && pts.size() >= 3) {
-        drawLine(pts.last(), pts.first(),0, color, algType); // Замикаємо полігон правильно
-        }
-    if (algType == 2){
-            drawLine(pts.last(), pts.first(),0,color,algType);
-        closed = getCircleF();
-    }
-
-}
 
 void ViewerWidget::redrawPolygon(const QColor& color, int algType)
 {
     if (!img) return;
     img->fill(Qt::white);
-
 
     // ВИПАДОК 1: Малюємо окремі лінії (поки полігон не завершено ПКМ)
     if (!polygonFinished) {
@@ -342,12 +325,10 @@ void ViewerWidget::redrawPolygon(const QColor& color, int algType)
             }
         }
     }
-
     // ВИПАДОК 2: Малюємо готовий полігон (після натискання ПКМ)
     else {
         QVector<QPoint> clipped = calculateClippedPolygon(originalPoints);
         if (clipped.isEmpty()) return;
-
         if (fillEnabled) {
             // Якщо це рівно 3 точки - малюємо градієнт через поділ
             if (originalPoints.size() == 3) {
@@ -369,8 +350,6 @@ void ViewerWidget::redrawPolygon(const QColor& color, int algType)
     update();
 }
 
-
-
 void ViewerWidget::rotation(double k){
     if(originalPoints.size() < 2 || !img) return;
 
@@ -380,7 +359,6 @@ void ViewerWidget::rotation(double k){
         double x = p.x() - center.x();
         double y = p.y() - center.y();
 
-
         double xr = x * cos(rad) - y * sin(rad) + center.x();
         double yr = x * sin(rad) + y * cos(rad) + center.y();
         p.setX(xr);
@@ -388,7 +366,6 @@ void ViewerWidget::rotation(double k){
     }
 
 }
-
 
 void ViewerWidget::Scale(double sx, double sy)
 {
@@ -428,7 +405,6 @@ void ViewerWidget::movePolygon(int dx, int dy) {
     }
 }
 
-
 void ViewerWidget::OsSum(){
     if (originalPoints.size() < 2 || !img) return;
     int x1 = originalPoints[0].x(), x2 = originalPoints[1].x();
@@ -441,7 +417,7 @@ void ViewerWidget::OsSum(){
             double xN = originalPoints[i].x() - 2 * a * ((a * originalPoints[i].x() + b * originalPoints[i].y() + c) / (a * a + b * b));
             double yN = originalPoints[i].y() - 2 * b * ((a * originalPoints[i].x() + b * originalPoints[i].y() + c) / (a * a + b * b));
             originalPoints[i].setX(xN), originalPoints[i].setY(yN);
-        }
+            }
         }
         else if (originalPoints.size() == 2){
             originalPoints[1].setX(x2);
@@ -482,7 +458,6 @@ QVector<QPoint> ViewerWidget::calculateCyrusBeckLine(QPoint P1, QPoint P2)
             else tU = std::min(tU, t);
         } else if (wn < 0) return {}; // Паралельно і зовні
     }
-
     if (tL <= tU) {
         return { QPoint(qRound(P1.x() + tL * d.x()), qRound(P1.y() + tL * d.y())),
                 QPoint(qRound(P1.x() + tU * d.x()), qRound(P1.y() + tU * d.y())) };
@@ -497,7 +472,7 @@ QVector<QPoint> ViewerWidget::calculateClippedPolygon(const QVector<QPoint>& sou
     int xmax = img->width() - 1;
     int ymax = img->height() - 1;
 
-    // Робимо це для всіх 4-х меж (ліва, права, верхня, нижня)
+    // 4 strany
     for (int border = 0; border < 4; border++) {
         if (V.isEmpty()) return {};
 
@@ -506,21 +481,17 @@ QVector<QPoint> ViewerWidget::calculateClippedPolygon(const QVector<QPoint>& sou
 
         // opakuj pre 0 <= i < n:
         for (int i = 0; i < V.size(); i++) {
-            QPoint P2 = V[i];   // Це наш Vi з конспекту
-
-            // Визначаємо, чи знаходяться точки всередині поточної межі
+            QPoint P2 = V[i];   // Vi
+            // kde body
             bool P1in, P2in;
-            if (border == 0)      { P1in = (P1.x() >= 0);    P2in = (P2.x() >= 0); }    // Ліва
-            else if (border == 1) { P1in = (P1.x() <= xmax); P2in = (P2.x() <= xmax); } // Права
-            else if (border == 2) { P1in = (P1.y() >= 0);    P2in = (P2.y() >= 0); }    // Верхня
-            else                  { P1in = (P1.y() <= ymax); P2in = (P2.y() <= ymax); } // Нижня
+            if (border == 0)      { P1in = (P1.x() >= 0);    P2in = (P2.x() >= 0); }    // lava
+            else if (border == 1) { P1in = (P1.x() <= xmax); P2in = (P2.x() <= xmax); } // prava
+            else if (border == 2) { P1in = (P1.y() >= 0);    P2in = (P2.y() >= 0); }    // horna
+            else                  { P1in = (P1.y() <= ymax); P2in = (P2.y() <= ymax); } // dolna
+            //algorithmus
 
-            // ТУТ ПОЧИНАЄТЬСЯ ЛОГІКА З ТВОГО КОНСПЕКТУ:
-
-            if (P2in) { // ak Vi,x >= xmin (Поточна точка P ВСЕРЕДИНІ)
-
+            if (P2in) { // ak Vi,x >= xmin
                 if (P1in) {
-
                     W.append(P2); // tak pridaj Vi do W
                 }
                 else {
@@ -546,12 +517,10 @@ QVector<QPoint> ViewerWidget::calculateClippedPolygon(const QVector<QPoint>& sou
                     W.append(priesecnik); // pridaj ho (Pi) do W
                 }
             }
-
             P1 = P2; // aktualizuj bod S = Vi
         }
-        V = W; // Результат обрізки однією межею стає вхідними даними для наступної
+        V = W; // predchadzajuci ide pre nasledujuci
     }
-
     return V;
 }
 void ViewerWidget::Scan_line(QVector<QPoint>& points, double z, const QColor& color)
@@ -562,17 +531,15 @@ void ViewerWidget::Scan_line(QVector<QPoint>& points, double z, const QColor& co
     int ymin = points[0].y();
     int ymax = points[0].y();
 
-    // знайти вертикальні межі полігона
+    // najst vertikalne okraje
     for (const QPoint& p : points) {
         if (p.y() < ymin) ymin = p.y();
         if (p.y() > ymax) ymax = p.y();
     }
 
-    // обрізка по межах зображення
     ymin = std::max(0, ymin);
     ymax = std::min(img->height() - 1, ymax);
 
-    // проходимо по кожному scan-line
     for (int y = ymin; y <= ymax; y++) {
         QVector<int> xYes;
 
@@ -581,15 +548,15 @@ void ViewerWidget::Scan_line(QVector<QPoint>& points, double z, const QColor& co
             QPoint p1 = points[i];
             QPoint p2 = points[(i + 1) % points.size()];
 
-            // горизонтальні ребра пропускаємо
+            // horizontal
             if (p1.y() == p2.y())
                 continue;
 
-            // впорядковуємо по y
+            // usporadujem
             if (p1.y() > p2.y())
                 std::swap(p1, p2);
 
-            // правило: включаємо нижню вершину, не включаємо верхню
+            // dolna hran
             if (y >= p1.y() && y < p2.y()) {
                 double x = p1.x() + (double)(y - p1.y()) * (p2.x() - p1.x()) / (double)(p2.y() - p1.y());
 
@@ -597,10 +564,9 @@ void ViewerWidget::Scan_line(QVector<QPoint>& points, double z, const QColor& co
             }
         }
 
-        // сортуємо всі x-перетини
         std::sort(xYes.begin(), xYes.end());
 
-        // зафарбовуємо попарно
+        // poparne farbujem
         for (int i = 0; i + 1 < xYes.size(); i += 2) {
             int xStart = xYes[i];
             int xEnd   = xYes[i + 1];
@@ -797,8 +763,7 @@ void ViewerWidget::paintEvent(QPaintEvent* event)//головна функція
     QRect area = event->rect();// прямокутник, оптимізація  "пошкодженої частини", не завжди треба перемальовувати весь
 	painter.drawImage(area, *img, area);//vykresli novy obrazok
 }
-//treba zmenit naspat QPoint na Verte3D ----
-void ViewerWidget::Draw3DObject(const QVector<Vertex3D>& points, const QVector<Triangle>& triangles, int TypeAlg, Scene& scene, Material& mat){
+void ViewerWidget::Draw3DObject(const QVector<Vertex3D>& points, const QVector<Triangle>& triangles, const QVector<Vertex3D>& Spoints, const QVector<Triangle>& S,int TypeAlg, Scene& scene, Material& mat, ObjectType type, int typeTriangle){
     if (points.isEmpty()) return;
     zBuffer.clear();
     for (int x = 0; x < img->width(); x++){
@@ -812,10 +777,50 @@ void ViewerWidget::Draw3DObject(const QVector<Vertex3D>& points, const QVector<T
        int centerX = img->width() / 2;
     int centerY = img->height() / 2;
     int i = 0;
+    for(const auto& tri : S){
+        QVector<QPoint> poly2D;
+        int indices[3] = {tri.v1, tri.v2, tri.v3};
+
+        Vertex3D p1, p2, p3;
+        Vertex3D N1, N2, N3;
+        N1 = p1 = Spoints[tri.v1];
+        N2 = p2 = Spoints[tri.v2];
+        N3 = p3 = Spoints[tri.v3];
+        double z0 = p1.z, z1 = p2.z, z2 = p3.z;
+
+        double zABS = (z0 + z1 + z2) / 3.0;
+
+        Vertex3D e1 = p2 - p1;
+        Vertex3D e2 = p3 - p1;
+
+        //toto nasa normal trojugolnika
+        Vertex3D N = e1 * e2;
+        double length = sqrt(N.x*N.x + N.y*N.y + N.z*N.z);
+        N.normalize(N);
+
+        N1.normalize(N1);
+        N2.normalize(N2);
+        N3.normalize(N3);
+        //bod
+        Vertex3D P = {(p1.x + p2.x + p3.x)/3.0, (p1.y+p2.y+p3.y)/3.0, (p1.z+p2.z+p3.z)/3.0};
+
+        for (int i = 0; i < 3; i++){
+            Vertex3D v = Spoints[indices[i]];
+            int screenX = static_cast<int>(centerX + v.x);
+            int screenY = static_cast<int>(centerY + v.y);
+            poly2D.append(QPoint(screenX,screenY));
+        }
+        fillTriangle({poly2D[0],getPhongColor(p1,N,scene, mat), z0},{poly2D[1],getPhongColor(p2,N,scene, mat), z1},{poly2D[2],getPhongColor(p3,N,scene, mat), z2}, typeTriangle);
+        //Scan_line(poly2D, zABS, getPhongColor(P, N,scene, mat));
+    }
+
+
+
+
     for(const auto& tri : triangles){
         QVector<QPoint> poly2D;
-        QVector<Vertex> vertex2D;
         int indices[3] = {tri.v1, tri.v2, tri.v3};
+
         Vertex3D p1, p2, p3;
         Vertex3D N1, N2, N3;
         N1 = p1 = points[tri.v1];
@@ -852,7 +857,7 @@ void ViewerWidget::Draw3DObject(const QVector<Vertex3D>& points, const QVector<T
             }
             else if (TypeAlg == 2){
                 QColor faceColor;
-                // Якщо вектор порожній, генеруємо колір за індексом, щоб не падати
+                // nahodne berem farbu
                 faceColor = QColor::fromHsv((i * 40) % 360, 200, 255);
                 if (poly2D.isEmpty()) return;
                 Scan_line(poly2D, zABS, faceColor);
@@ -865,30 +870,15 @@ void ViewerWidget::Draw3DObject(const QVector<Vertex3D>& points, const QVector<T
             Scan_line(poly2D, zABS, getPhongColor(P, N,scene, mat));
         }
         else if (TypeAlg == 4){
-            fillTriangle({poly2D[0],getPhongColor(p1,N1,scene, mat), z0},{poly2D[1],getPhongColor(p2,N2,scene, mat), z1},{poly2D[2],getPhongColor(p3,N3,scene, mat), z2},1);
+            if(type == SPHERE)
+                fillTriangle({poly2D[0],getPhongColor(p1,N1,scene, mat), z0},{poly2D[1],getPhongColor(p2,N2,scene, mat), z1},{poly2D[2],getPhongColor(p3,N3,scene, mat), z2}, typeTriangle);
+            else if(type == CUBE)
+                fillTriangle({poly2D[0],getPhongColor(p1,N,scene, mat), z0},{poly2D[1],getPhongColor(p2,N,scene, mat), z1},{poly2D[2],getPhongColor(p3,N,scene, mat), z2}, typeTriangle);
         }
         i++;
     }
     update();
 }
-
-
-
-
-
-//musim navrhnut vsetky premenne ktore musim zadat z UI nahodou tak pochopim co robit dalej vsetky I rd rs rs
-
-//vektory sveta budem pocitat asi uz priamo lebo musi ist cyklus
-        //alebo bude funkcia ako s neir alebo bairis este moze byt ze nieco zmenit na zacatku, mozu byt problem s
-//smerom vektorov normaly ale dufam ze uz vsetko v poriadku
-
-
-//teraz vsetko ale kludne moze nieco spomenim, moze byt ze perepisem niejaku funkciu alebo vyhodim odpad ktory mam v kode
-
-
-//predpokladam ze sfera musi byt biela a uz svetlo bude menit farbu tak potom mozno vyhodit tie random color
-
-//QColor ViewerWidget::neir(Scene scene, Material material){}
 
 void ViewerWidget::ZPixel(int x, int y, double z, QColor color){
     if(x < 0 || x >= img->width() || y < 0 || y >= img->height())return;
@@ -930,23 +920,24 @@ double ViewerWidget::getInterpolatedZ(int x, int y, Vertex t0, Vertex t1, Vertex
     double S2 = static_cast<double>((t1.pos.y() - t2.pos.y()) * (t0.pos.x() - t2.pos.x()) +
                                      (t2.pos.x() - t1.pos.x()) * (t0.pos.y() - t2.pos.y()));
 
-    //if (std::abs(S2) < 1e-6) return t0.z; // Запобігаємо діленню на 0
-
     // Bari vahy
     double w0 = ((t1.pos.y() - t2.pos.y()) * (x - t2.pos.x()) +
                  (t2.pos.x() - t1.pos.x()) * (y - t2.pos.y())) / S2;
 
     double w1 = ((t2.pos.y() - t0.pos.y()) * (x - t2.pos.x()) +
                  (t0.pos.x() - t2.pos.x()) * (y - t2.pos.y())) / S2;
-//dobrý den Vázený pan kollar ako sa mate? Som v dobrom zdravi a Vy ste?
-    // teraz sa snazim pochopit ako funguje pocitacova grafika
-    //dovidenia majte sa, pekný deň
-
-
-
-    //teraz hodina noci tak preto.
     double w2 = 1.0 - w0 - w1;
 
     // zetova suradnica
     return w0 * t0.z + w1 * t1.z + w2 * t2.z;
 }
+QVector<Vertex3D> ViewerWidget::move(int dx, int dy, const QVector<Vertex3D>& point){
+    QVector<Vertex3D> p;
+    for(int i = 0; i < point.size(); i++){
+        p.push_back({point[i].x + dx, point[i].y, point[i].z});//rozsah musim niejako predpokladat
+    }
+    return p;
+}
+//prepisat algorithmus pre drawpolygon a redrawpolygon aby to bolo neblupe
+
+//skusit prepisat ImageViewer

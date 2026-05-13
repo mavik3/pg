@@ -7,12 +7,15 @@ struct Vertex{
     QColor color;
     double z;
 };
+struct object{
+    QVector<Vertex3D>& point;
+    QVector<Vertex3D>& mesh;
+};
 
-
+enum ObjectType { SPHERE, CUBE };
 class ViewerWidget :public QWidget {
 	Q_OBJECT
 private:
-
 
     Vertex base_t0, base_t1, base_t2;
 
@@ -29,7 +32,7 @@ private:
     // чи вже є готовий об'єкт
     bool polygonFinished = false;   // чи завершений полігон
 
-    bool draggingPolygon = false;
+    bool draggingPolygon = false;//pre move
     QPoint lastMousePos = QPoint(0, 0);
 
     bool fillEnabled = false;
@@ -42,12 +45,6 @@ private:
     Material mat = {};
 
     QVector<QVector<double>> zBuffer;
-
-    //void setVectorLight(const QVector<Triangle>&);
-
-    //предпокладаю же мусім уробіть іну функцію ако циклус мусі ість по кождом пікселі ако сканлайн але іні
-    QVector3D color;
-
 
 public:
 	ViewerWidget(QSize imgSize, QWidget* parent = Q_NULLPTR);
@@ -82,8 +79,6 @@ public:
     void drawLineBresenham(QPoint start, QPoint end, double z, QColor color);
     void drawLineCircle(QPoint center, QPoint radius, QColor color);
     void drawCirclePoints(int xc, int yc, int x, int y, QColor color);
-    void drawPolygon(const QVector<QPoint>& pts, QColor color, int algLine, bool closed = true);
-
 
     QVector<QPoint>& getPolygonPoints() { return polygonPoints; }
     void clearPolygon() { polygonPoints.clear(); polygonFinished = false; }
@@ -136,20 +131,17 @@ public:
 
     void updateTriangleLogic();
 
-    void Draw3DObject(const QVector<Vertex3D>& points, const QVector<Triangle>& triangles, int TypeAlg, Scene& scene, Material& mat);
+    void Draw3DObject(const QVector<Vertex3D>& points, const QVector<Triangle>& triangles,const QVector<Vertex3D>& Spoints, const QVector<Triangle>& S, int TypeAlg, Scene& scene, Material& mat, ObjectType type, int typeTriangle);
 
     QVector<QVector<double>>& getZBuffer() {return zBuffer;}
     void setZBuffer(QVector<QVector<double>> zbuffer){zBuffer = zbuffer;}
     void ZPixel(int x, int y, double z, QColor color);
 
-
-
     QColor getPhongColor(const Vertex3D& P, const Vertex3D& N, const Scene& scene, const Material& mat);
 
     double getInterpolatedZ(int x, int y, Vertex t0, Vertex t1, Vertex t2);
 
-    //QColor neir(Scene scene, Material mat);
-
+    QVector<Vertex3D> move(int dx, int dy, const QVector<Vertex3D>&);
 
 public slots:
 	void paintEvent(QPaintEvent* event) Q_DECL_OVERRIDE;

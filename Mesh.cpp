@@ -17,30 +17,68 @@ void Mesh::createCube(double a){
                 Tpoints.push_back({px, py, pz});
             }
         }
-    }
-
-    addObject(0, 2, 3);
-    addObject(0, 3, 1);
+    }/*
+    Tpoints.push_back({-half,-half,-half});
+    Tpoints.push_back({half,-half,-half});
+    Tpoints.push_back({-half,half,-half});
+    Tpoints.push_back({half,half,-half});
+    Tpoints.push_back({-half,-half,half});
+    Tpoints.push_back({half,-half,half});
+    Tpoints.push_back({-half,half,-half});
+    Tpoints.push_back({half,half,-half});
+    Tpoints.push_back({0,0,-half});
+    Tpoints.push_back({0,0,half});
+    Tpoints.push_back({-half,0,0});
+    Tpoints.push_back({half,0,-half});
+    Tpoints.push_back({0,-half,0});
+    Tpoints.push_back({0,half,0});
+ */
+    //передня
+    addObject(0, 2, 3,Obj);
+    addObject(0, 3, 1,Obj);
 
     // Задня грань (Z = +half)
-    addObject(4, 5, 7);
-    addObject(4, 7, 6);
+    addObject(4, 5, 7,Obj);
+    addObject(4, 7, 6,Obj);
 
     // Ліва грань (X = -half)
-    addObject(0, 4, 6);
-    addObject(0, 6, 2);
+    addObject(0, 4, 6,Obj);
+    addObject(0, 6, 2,Obj);
 
     // Права грань (X = +half)
-    addObject(1, 3, 7);
-    addObject(1, 7, 5);
+    addObject(1, 3, 7,Obj);
+    addObject(1, 7, 5,Obj);
 
     // Верхня грань (Y = +half)
-    addObject(2, 6, 7);
-    addObject(2, 7, 3);
+    addObject(2, 6, 7,Obj);
+    addObject(2, 7, 3,Obj);
 
     // Нижня грань (Y = -half)
-    addObject(0, 1, 5);
-    addObject(0, 5, 4);
+    addObject(0, 1, 5,Obj);
+    addObject(0, 5, 4,Obj);
+}
+void Mesh::createArray(double a, int y, int kus){
+    Spoints.clear();
+    Array.clear();
+    for (int i = 0; i < kus; i++){
+        for (int j = 0; j < kus; j++){
+            double Sx = -a / 2 + a / (kus - 1) * j;
+            double Sz = (double)y;
+            double Sy = -a / 2 + a / (kus - 1) * i;
+            Spoints.append({Sx,Sz,Sy});
+        }
+    }
+
+    for (int i = 0; i < kus - 1; i++){
+        for(int k = 0; k < kus - 1; k++){
+            //double Sx = (k % 2 == 0) ? -a / 2 + a * i : -a * 2 + a / 4 * (j + k);
+            //double Sz = (k / 2 == 0) ? a / 2 + a / 4 * i : -a / 4 + a / 4 * i;
+            //double Sy = (double)y;
+            addObject(kus * i + k,kus * i + (k + 1),(i + 1) * kus + k,Array);
+            addObject((k + 1) + kus * i, (k + 1) + (i + 1) * kus, (i + 1) * kus + k, Array);
+
+        }
+    }
 }
 
 void Mesh::createSphere(double r, int stacks){
@@ -48,9 +86,9 @@ void Mesh::createSphere(double r, int stacks){
     int sectors = stacks;
     Tpoints.clear();
     Obj.clear();
-
-    double deltaPhi = M_PI / stacks;        // крок по вертикалі
-    double deltaTheta = 2.0 * M_PI / sectors;
+    //rozdelenie na casti
+    double deltaPhi = M_PI / stacks; //po verticale
+    double deltaTheta = 2.0 * M_PI / sectors; //po horizontale
 
     for (int i = 0; i <= stacks; i++){
         double Phi = i * deltaPhi;
@@ -61,23 +99,19 @@ void Mesh::createSphere(double r, int stacks){
                                (double)(r * sin(Phi) * sin(Theta))});
         }
     }
-    for (int i = 0; i < stacks; i++) { // цикл по поверхах
-        for (int j = 0; j < sectors; j++) { // цикл по меридіанах
+    for (int i = 0; i < stacks; i++) { // horizontal
+        for (int j = 0; j < sectors; j++) { // meredian
 
-            // k1 - це ліва верхня точка нашого "квадратика"
             int k1 = i * (sectors + 1) + j;
 
-            // k2 - це точка прямо під нею (на наступному поверсі)
             int k2 = k1 + (sectors + 1);
 
-            // Тепер у нас є 4 точки секції:
             // k1 --- k1+1
             // |       |
             // k2 --- k2+1
-
-            // Додаємо два трикутники (розбиваємо квадрат діагоналлю)
-            addObject(k1, k1 + 1, k2);     // Перший трикутник
-            addObject(k1 + 1, k2 + 1, k2); // Другий трикутник
+            //dva trojuholnika
+            addObject(k1, k1 + 1, k2,Obj);
+            addObject(k1 + 1, k2 + 1, k2,Obj);
         }
     }
 }
@@ -112,7 +146,7 @@ bool Mesh::loadFromVTK(QString filename){
                 if (n == 3){
                     int v1, v2, v3;
                     file >> v1 >> v2 >> v3;
-                    addObject(v1, v2, v3);
+                    addObject(v1, v2, v3,Obj);
                 }
                 else {
                     int dummy;
@@ -125,7 +159,6 @@ bool Mesh::loadFromVTK(QString filename){
     return !Obj.empty();
 }
 
-
 bool Mesh::saveToVTK(QString filename){
     string path = filename.toStdString();
     ofstream file(path);
@@ -135,14 +168,14 @@ bool Mesh::saveToVTK(QString filename){
     file << "meow kocka" << "\n";
     file << "ASCII" << "\n";
     file << "DATASET POLYDATA" << "\n";
-    file << "POINTS " << Tpoints.size() << " double" << "\n";
+    file << "POINTS " << Spoints.size() << " double" << "\n";
 
-    for (const Vertex3D& p : Tpoints){
+    for (const Vertex3D& p : Spoints){
         file << p.x << " " << p.y << " " << p.z << endl;
     }
 
-    file << "POLYGONS " << Obj.size() << " " << Obj.size() * 4 << endl;
-    for (const Triangle& T : Obj){
+    file << "POLYGONS " << Array.size() << " " << Array.size() * 4 << endl;
+    for (const Triangle& T : Array){
         file << "3 "
              << T.v1 << " "
              << T.v2 << " "
@@ -173,66 +206,34 @@ void Mesh::setVectorNorm(int Thetta, int Phi){
     VectorNorm.push_back(v);
 }
 
-QVector<Vertex3D> Mesh::mutation(const QVector<Vertex3D>& VectorNorm){
+QVector<Vertex3D> Mesh::mutation(const QVector<Vertex3D>& VectorNorm, const QVector<Vertex3D>& points){
     QVector<Vertex3D> Mpoints;
-    if (VectorNorm.size() < 3) return Tpoints;
-    if (!Tpoints.isEmpty()){
-        for(int i = 0; i < Tpoints.size(); i++){
-            Vertex3D W = {Tpoints[i].x * VectorNorm[0].x +
-                              Tpoints[i].y * VectorNorm[0].y +
-                              Tpoints[i].z * VectorNorm[0].z,
-                          Tpoints[i].x * VectorNorm[1].x +
-                              Tpoints[i].y * VectorNorm[1].y +
-                              Tpoints[i].z * VectorNorm[1].z,
-                          Tpoints[i].x * VectorNorm[2].x +
-                              Tpoints[i].y * VectorNorm[2].y +
-                              Tpoints[i].z * VectorNorm[2].z};
+    if (VectorNorm.size() < 3) return points;
+    if (!points.isEmpty()){
+        for(int i = 0; i < points.size(); i++){
+            Vertex3D W = {points[i].x * VectorNorm[0].x +
+                              points[i].y * VectorNorm[0].y +
+                              points[i].z * VectorNorm[0].z,
+                          points[i].x * VectorNorm[1].x +
+                              points[i].y * VectorNorm[1].y +
+                              points[i].z * VectorNorm[1].z,
+                          points[i].x * VectorNorm[2].x +
+                              points[i].y * VectorNorm[2].y +
+                              points[i].z * VectorNorm[2].z};
             Mpoints.push_back(W);
         }
     }
     return Mpoints;
 }
 QVector<Vertex3D> Mesh::parallelProj(QVector<Vertex3D>& points){
-    /*double a = VectorNorm[0].x;
-    double b = VectorNorm[0].y;
-    double c = VectorNorm[0].z;
-    double low = a * a + b * b + c * c;
-    for (int i = 0; i < points.size(); i++){
-        double high = a * points[i].x + b * points[i].y + c * points[i].z;
-        points[i].x -= a * high / low;
-        points[i].y -= b * high / low;
-        points[i].z -= c * high / low;
-    }*/
+
     QVector<Vertex3D> Parallel;
     for (int i = 0; i < points.size(); i++){
-        Parallel.push_back({points[i].x,points[i].y,points[i].z});
-    }
-    return Parallel;
+        Parallel.push_back({points[i].x,points[i].y,points[i].z});}
 
+    return Parallel;
 }
-/*void Mesh::perspectiveProj(QVector<Vertex3D>& points, int d){
-   *double a = VectorNorm[0].x;
-    double b = VectorNorm[0].y;
-    double c = VectorNorm[0].z;
-    for (int i = 0; i <points.size(); i++){
-        double x = points[i].x;
-        double y = points[i].y;
-        double z = points[i].z;
-        double low = a * (- x) + b * (- y) + c * (d - z);
-        double high = a * x + b * y + c * z + d;
-        points[i].x += x * high / low;
-        points[i].y += y * high / low;
-        points[i].z += (z - d) * high / low;
-    }
-   *for (int i = 0; i <points.size(); i++){
-        double x = points[i].x;
-        double y = points[i].y;
-        double z = points[i].z;
-        points[i].x = d * x / z;
-        points[i].y = d * y / z;
-        points[i].z = 0;
-     }
-}*/
+
 QVector<Vertex3D> Mesh::perspectiveProj(QVector<Vertex3D>& points, int d) {
     QVector<Vertex3D> Perspective;
     for (int i = 0; i < points.size(); i++) {
